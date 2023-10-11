@@ -4,27 +4,27 @@
 ## Modules
 
 1) **dark-1**
-Core elements: graph nodes, auto-diff engine for scalars only.
+Core elements: graph nodes, auto-diff engine for scalars only.   
 Sample: quadratic 1D function optimization
    
 2) **dark-2**
-Support for tensor objects.
+Support for tensor objects.    
 Sample: logistic regression on 2D data.
    
 3) **dark-3**
-Implementation of higher-level classes: Module, Linear and ReLU layers and BCEWithLogits / CrossEntropy loss. SGD optimizer.
+Implementation of higher-level classes: Module, Linear and ReLU layers and BCEWithLogits / CrossEntropy loss. SGD optimizer.     
 Sample: MNIST classification (without dataloader)
    
 4) **dark-4**
-Implementation of Dataset, DataLoader and transformation classes.
+Implementation of Dataset, DataLoader and transformation classes.    
 Sample: FashionMNIST classification - in a PyTorch style!
 
 5) **dark-5** (TODO)
-Implementation of Conv2D and MaxPool layers
+Implementation of Conv2D and MaxPool layers    
 Sample: CIFAR10 classification using CNN.
 
 6) **dark-6** (TODO)
-GPU support via CuPy
+GPU support via CuPy    
 Sample: cat/dog classification using Resent9 written from scratch
 
 
