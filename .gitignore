@@ -1,0 +1,11 @@
+#pip and Python generated stuff
+dark.egg-info/
+build/
+__pycache__
+
+#ignore all databases
+**/db-*/**
+#all serialized models
+*.pickle
+#unignore all md files
+!*.md
