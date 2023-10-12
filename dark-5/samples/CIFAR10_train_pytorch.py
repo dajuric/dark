@@ -1,18 +1,17 @@
 import os
-import pickle
 import numpy as np
-import dark
-import dark.nn as nn
-from dark.nn.init import default_init_weights
-from dark.optim import *
-from dark.utils.data import ImageFolder, DataLoader
-from dark.utils.transforms import *
+import torch
+import torch.nn as nn
+from torch.utils.data import DataLoader
+from torch.optim import *
+from torchvision.datasets import ImageFolder
+from torchvision.transforms import *
 
 IM_SIZE = 32
 BATCH_SIZE = 64
 CLASS_COUNT = 3 # 10 for full dataset
 EPOCHS = 5
-model_path = "samples/model.pickle"
+model_path = "samples/model.pt"
 
 class ConvBlock(nn.Module):
     def __init__(self, in_channels, out_channels):
@@ -57,18 +56,18 @@ def get_loaders():
         one_hot[l] = 1
         return one_hot
 
-    trTransforms = Compose(
-        Resize(IM_SIZE, IM_SIZE),
-        FlipHorizontal(),
+    trTransforms = Compose([
+        Resize(IM_SIZE),
+        RandomHorizontalFlip(),
+        ToTensor(),
         Normalize(0.5, 0.5),
-        ToTensorV2()
-    )
+    ])
 
-    teTransforms = Compose(
-        Resize(IM_SIZE, IM_SIZE),
+    teTransforms = Compose([
+        Resize(IM_SIZE),
+        ToTensor(),
         Normalize(0.5, 0.5),
-        ToTensorV2()
-    )
+    ])
 
     trSet = ImageFolder("samples/db-CIFAR10/train/", trTransforms, label_transform)
     trLoader = DataLoader(trSet, BATCH_SIZE, shuffle=True)
@@ -81,10 +80,9 @@ def get_loaders():
 def get_net():
     net = None
     if os.path.exists(model_path):
-        net = pickle.load(open(model_path, "rb")) 
+        net = torch.load(model_path) 
     else:
         net = MyConvNet()
-        net.apply(default_init_weights)
 
     return net
 
@@ -102,16 +100,16 @@ def train_loop(dataloader, model, loss_fn, optimizer):
         loss.backward()
         optimizer.step()
         
-        correct += (pred.value.argmax(1) == y.argmax(1)).astype(np.float32).sum().item()
+        correct += (pred.argmax(1) == y.argmax(1)).type(torch.float32).sum().item()
 
         if batchIdx % 100 == 0:
-            loss, current = loss.value.item(), batchIdx * len(X)
+            loss, current = loss.item(), batchIdx * len(X)
             print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
 
     correct /= size
     print(f"Train: \n  Accuracy: {(100*correct):>0.1f}% \n") 
 
-#@dark.no_grad()
+@torch.no_grad()
 def test_loop(dataloader, model, loss_fn):
     model.eval()
     size = len(dataloader.dataset)
@@ -120,8 +118,8 @@ def test_loop(dataloader, model, loss_fn):
 
     for X, y in dataloader:
         pred = model(X)
-        test_loss += loss_fn(pred, y).value.item()
-        correct += (pred.value.argmax(1) == y.argmax(1)).astype(np.float32).sum().item()
+        test_loss += loss_fn(pred, y).item()
+        correct += (pred.argmax(1) == y.argmax(1)).type(torch.float32).sum().item()
 
     test_loss /= num_batches
     correct /= size
@@ -144,7 +142,7 @@ def main():
             min_test_loss = test_loss
 
             print(f"Saving best model\n\n")
-            pickle.dump(model, open(model_path, "wb"))
+            torch.save(model, model_path)
 
     print("Done!")
 

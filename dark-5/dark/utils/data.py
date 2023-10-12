@@ -21,7 +21,7 @@ class ImageFolder(Dataset):
         self.imgT = imgT
         self.lblT = lblT
 
-        self.imgNames = glob.glob(os.path.join(rootFolder, "**", "*.png"))
+        self.imgNames = sorted(glob.glob(os.path.join(rootFolder, "**", "*.png")))
         self.labels = self.get_labels(self.imgNames)
 
     def __len__(self):
