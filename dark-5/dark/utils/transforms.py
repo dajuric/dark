@@ -7,7 +7,7 @@ class Transform():
         pass
 
     def __call__(self, im):
-        raise NotImplemented
+        raise NotImplemented()
 
 class Compose():
     def __init__(self, *transforms):

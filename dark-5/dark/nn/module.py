@@ -124,3 +124,26 @@ class Softmax(Module):
         result = dark.div(n, d)
         return result
 
+
+class Conv2d(Module):
+    def __init__(self, in_channels, out_channels, kernel_size, padding = 0):
+        super().__init__()
+        assert isinstance(kernel_size, int)
+
+        self.weights = ZeroParam(out_channels, in_channels, kernel_size, kernel_size)
+        self.bias    = ZeroParam(1,            out_channels, 1,          1) #TODO: check!!!
+
+        self.padding = padding
+
+    def forward(self, input):
+        return dark.add(dark.conv2d(input, self.weights, self.padding), self.bias)
+
+class MaxPool2d(Module):
+    def __init__(self, kernel_size = 2):
+        super().__init__()
+        assert isinstance(kernel_size, int)
+
+        self.kernel_size = kernel_size
+
+    def forward(self, input):
+        return dark.max_pool2d(input, self.kernel_size)

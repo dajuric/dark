@@ -1,7 +1,7 @@
 import numpy as np
 
 is_training = True
-precision = np.float32
+precision = np.float64
 
 class Node():
     op = None

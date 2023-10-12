@@ -3,29 +3,37 @@
 
 ## Modules
 
-1) **dark-1**
+1) **dark-1** 
 Core elements: graph nodes, auto-diff engine for scalars only.   
-Sample: quadratic 1D function optimization
+<ins>Sample</ins>: quadratic 1D function optimization
+[Medium article 1 - TODO]() 
+[Medium article 2 - TODO]() 
    
-2) **dark-2**
+1) **dark-2**
 Support for tensor objects.    
-Sample: logistic regression on 2D data.
+<ins>Sample</ins>: logistic regression on 2D data.
+[Medium article - TODO]() 
    
-3) **dark-3**
+1) **dark-3**
 Implementation of higher-level classes: Module, Linear and ReLU layers and BCEWithLogits / CrossEntropy loss. SGD optimizer.     
-Sample: MNIST classification (without dataloader)
+<ins>Sample</ins>: MNIST classification (without dataloader)
+[Medium article - TODO]() 
    
-4) **dark-4**
+1) **dark-4**
 Implementation of Dataset, DataLoader and transformation classes.    
-Sample: FashionMNIST classification - in a PyTorch style!
+<ins>Sample</ins>: FashionMNIST classification - in a PyTorch style!
+[Medium article - TODO]() 
 
-5) **dark-5** (TODO)
+1) **dark-5** (TODO)
 Implementation of Conv2D and MaxPool layers    
-Sample: CIFAR10 classification using CNN.
+<ins>Sample</ins>: CIFAR10 classification using CNN.
+[Medium article 1 - TODO]() 
+[Medium article 2 - TODO]() 
 
-6) **dark-6** (TODO)
+1) **dark-6** (TODO)
 GPU support via CuPy    
-Sample: cat/dog classification using Resent9 written from scratch
+<ins>Sample</ins>: cat/dog classification using Resent9 written from scratch
+[Medium article - TODO]() 
 
 
 ## How to run

@@ -3,7 +3,7 @@ import numpy as np
 import cv2
 import glob, os
 import matplotlib.pyplot as plt
-from .CIFAR10_train import MyNNBlock, MyNN #for deserialization
+from .CIFAR10_train import ConvBlock, MyConvNet #for deserialization
 
 def get_random_sample():
     images = glob.glob("samples/db-CIFAR10/test/**/*.png")

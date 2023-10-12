@@ -8,52 +8,57 @@ from dark.optim import *
 from dark.utils.data import ImageFolder, DataLoader
 from dark.utils.transforms import *
 
-IM_SIZE = 28
-BATCH_SIZE = 32
+IM_SIZE = 32
+BATCH_SIZE = 64
 CLASS_COUNT = 10
 EPOCHS = 5
 model_path = "samples/model.pickle"
 
-class MyNNBlock(nn.Module):
-    def __init__(self, in_dim, out_dim):
+class ConvBlock(nn.Module):
+    def __init__(self, in_channels, out_channels):
         super().__init__()
 
-        self.linear = nn.Linear(in_dim, out_dim)
-        self.activation = nn.ReLU()
+        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size=5, padding=0)
+        self.relu = nn.ReLU()
+        self.pool = nn.MaxPool2d(2)
 
     def forward(self, x):
-        x = self.linear(x)
-        x = self.activation(x)
-        return x
+        out = self.conv(x)
+        out = self.relu(out)
+        out = self.pool(out)
+        return out
 
-class MyNN(nn.Module):
+class MyConvNet(nn.Module):
     def __init__(self):
         super().__init__()
 
-        self.flatten = nn.Flatten()
-        self.block1 = MyNNBlock(IM_SIZE*IM_SIZE, 512)
-        self.block2 = MyNNBlock(512, 512)
-        self.linear = nn.Linear(512, 10)
+        self.network = nn.Sequential(
+            ConvBlock(3, 6),
+            ConvBlock(6, 16),
+            nn.Flatten(),
+
+            nn.Linear(16 * 5 * 5, 120),
+            nn.ReLU(),
+
+            nn.Linear(120, 84),
+            nn.ReLU(),
+
+            nn.Linear(84, CLASS_COUNT)
+        )
 
     def forward(self, x):
-        x = self.flatten(x)
-
-        x = self.block1(x)
-        x = self.block2(x)
-
-        x = self.linear(x)
-        return x
+        logits = self.network(x)
+        return logits
 
 
 def get_loaders():
     def label_transform(l):
-        one_hot = np.zeros(CLASS_COUNT, dtype=np.float32)
+        one_hot = np.zeros(CLASS_COUNT, dtype=np.float64)
         one_hot[l] = 1
         return one_hot
 
     trTransforms = Compose(
         Resize(IM_SIZE, IM_SIZE),
-        Grayscale(),
         FlipHorizontal(),
         Normalize(0.5, 0.5),
         ToTensorV2()
@@ -61,15 +66,14 @@ def get_loaders():
 
     teTransforms = Compose(
         Resize(IM_SIZE, IM_SIZE),
-        Grayscale(),
         Normalize(0.5, 0.5),
         ToTensorV2()
     )
 
-    trSet = ImageFolder("samples/db-CIFAR10/train/", trTransforms, label_transform)
+    trSet = ImageFolder("dark-5/samples/db-CIFAR10/train/", trTransforms, label_transform)
     trLoader = DataLoader(trSet, BATCH_SIZE, shuffle=True)
 
-    teSet = ImageFolder("samples/db-CIFAR10/test/", teTransforms, label_transform)
+    teSet = ImageFolder("dark-5/samples/db-CIFAR10/test/", teTransforms, label_transform)
     teLoader = DataLoader(teSet, BATCH_SIZE)
 
     return trLoader, teLoader
@@ -79,7 +83,7 @@ def get_net():
     if os.path.exists(model_path):
         net = pickle.load(open(model_path, "rb")) 
     else:
-        net = MyNN()
+        net = MyConvNet()
         net.apply(default_init_weights)
 
     return net
@@ -116,7 +120,7 @@ def test_loop(dataloader, model, loss_fn):
     for X, y in dataloader:
         pred = model(X)
         test_loss += loss_fn(pred, y).value.item()
-        correct += (pred.value.argmax(1) == y.argmax(1)).astype(np.float32).sum().item()
+        correct += (pred.value.argmax(1) == y.argmax(1)).astype(np.float64).sum().item()
 
     test_loss /= num_batches
     correct /= size
