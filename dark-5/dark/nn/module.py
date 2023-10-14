@@ -58,8 +58,7 @@ class Module():
             self._parameters[key] = value
         elif isinstance(value, Module):
             self._modules[key] = value
-        # else:
-        #     super().__setattr__(key, value)
+
         super().__setattr__(key, value)
 
 class Sequential(Module):

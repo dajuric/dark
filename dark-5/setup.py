@@ -1,5 +1,3 @@
-# https://stackoverflow.com/questions/19048732/python-setup-py-develop-vs-install/19048754#19048754
-
 from setuptools import setup
 
 setup(
@@ -9,5 +7,5 @@ setup(
     # packages=find_packages(exclude=["test_*"]),
     packages=["dark"],
     package_dir={"dark": "dark"},
-    install_requires = ["numpy", "opencv-python", "matplotlib"]
+    install_requires = ["numpy", "opencv-python", "numba"]
     )
