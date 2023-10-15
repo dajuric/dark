@@ -1,4 +1,3 @@
-# ref: https://towardsdatascience.com/neural-network-optimizers-from-scratch-in-python-af76ee087aab
 
 class Optimizer():
     def __init__(self, parameters):
