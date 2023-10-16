@@ -1,6 +1,10 @@
 from .autodiff import Operation
 from .utils import *
 from dark.tensor import *
+from .operations_conv_cpu import corr2d_cpu
+from .operations_conv_gpu import corr2d_gpu
+from .operations_pool_cpu import max_pool_2d_cpu, max_unpool_2d_cpu
+from .operations_pool_gpu import max_pool_2d_gpu, max_unpool_2d_gpu
 
 class AbsoluteValue(Operation):
 
@@ -171,6 +175,65 @@ class View(Operation):
         origShape = x.shape
         return [cp.reshape(dldy, origShape)]
 
+class Conv2D(Operation):
+
+    @staticmethod
+    def _f(s, k, **kwargs):
+        return Conv2D._corr2d(s, k, kwargs["padding"])
+
+    @staticmethod
+    def _df(dldy, y, s, k):
+        p = Conv2D._get_padding(s.shape[-1], dldy.shape[-1], k.shape[-1])
+        dlds = Conv2D._conv2d(dldy, k.transpose((1, 0, 2, 3)), abs(p))
+
+        p = Conv2D._get_padding(k.shape[-1], dldy.shape[-1], s.shape[-1])
+        dldk = Conv2D._conv2d(dldy.transpose((1, 0, 2, 3)), s.transpose((1, 0, 2, 3)), abs(p))
+        return dlds, dldk
+
+    @staticmethod
+    def _get_padding(o, s, k):
+        p = (o - s + k - 1) // 2
+        return p
+    
+    @staticmethod
+    def _corr2d(tensor, kernel, padding):
+        if is_cpu():
+            return corr2d_cpu(tensor, kernel, padding)
+        else:
+            return corr2d_gpu(tensor, kernel, padding)
+        
+    @staticmethod
+    def _conv2d(tensor, kernel, padding):
+        kernel = xp.flip(xp.flip(kernel, axis=-2), axis=-1) #flip horizonal and vertical
+        return Conv2D._corr2d(tensor, kernel, padding)
+
+class MaxPool2D(Operation):
+
+    @staticmethod
+    def _f(x, **kwargs):
+        return MaxPool2D._max_pool_2d(x, kwargs["kernel_size"])
+
+    @staticmethod
+    def _df(dldy, y, x):
+        n = x.shape[-1] // y.shape[-1]
+        dldx = MaxPool2D._max_unpool_2d(dldy, x, n)
+        return [dldx]
+    
+    @staticmethod
+    def _max_pool_2d(tensor, n):
+        if is_cpu():
+            return max_pool_2d_cpu(tensor, n)
+        else:
+            return max_pool_2d_gpu(tensor, n)
+        
+    @staticmethod
+    def _max_pool_2d(dldy, x, n):
+        if is_cpu():
+            return max_unpool_2d_cpu(dldy, x, n)
+        else:
+            return max_unpool_2d_gpu(dldy, x, n)
+
+
 
 def abs(x):
     return AbsoluteValue.apply(x)
@@ -219,3 +282,9 @@ def neg(x):
 
 def view(x, shape):
     return View.apply(x, shape=shape)
+
+def conv2d(s, k, padding = 0):
+    return Conv2D.apply(s, k, padding = padding)
+
+def max_pool2d(x, kernel_size = 2):
+    return MaxPool2D.apply(x, kernel_size = kernel_size)

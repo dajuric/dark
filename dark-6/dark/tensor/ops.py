@@ -3,11 +3,11 @@ backends = ["cpu"]
 import numpy as np
 
 try:
-    import cupy as cp
+    import cupy as xp
     from cupyx.scipy.signal import correlate2d
     backends.append("cuda")
 except:
-    import numpy as cp
+    import numpy as xp
         
 np.seterr(over='raise')
         
