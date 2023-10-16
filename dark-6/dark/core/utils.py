@@ -1,4 +1,4 @@
-from dark.tensor import *
+import dark.tensor as xp
 
 def reduce_sum(tensor, targetShape):
     assert len(tensor.shape) == len(targetShape)
@@ -7,9 +7,9 @@ def reduce_sum(tensor, targetShape):
     while True:
         srcShape = result.shape
         
-        reduceDim = cp.argmin(cp.array(targetShape) - cp.array(srcShape)).item()
+        reduceDim = xp.argmin(xp.array(targetShape) - xp.array(srcShape)).item()
         if srcShape[reduceDim] == targetShape[reduceDim]:
             return result
 
-        result = cp.sum(result, axis=reduceDim, keepdims=True)
+        result = xp.sum(result, axis=reduceDim, keepdims=True)
   

@@ -1,4 +1,4 @@
-from dark.tensor import *
+import dark.tensor as xp
 from dark.nn import module
 from dark import *
 

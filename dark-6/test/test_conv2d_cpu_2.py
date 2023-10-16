@@ -1,5 +1,9 @@
-import numpy as xp
-from numpy.lib.stride_tricks import as_strided
+# import numpy as xp
+# from numpy.lib.stride_tricks import as_strided
+
+
+import cupy as xp
+from cupy.lib.stride_tricks import as_strided
 from ttictoc import tic,toc
 
 
@@ -46,6 +50,12 @@ from ttictoc import tic,toc
 #     return result
     
 def corr2d2(a, b):
+    assert len(tensor.shape) == 4 #b, c, w, h
+    assert len(kernel.shape) == 4 #b, c, w, h
+
+    tensor, kernel = _swap_conv_args_needed(tensor, kernel, padding)
+    tensor = cp.pad(tensor, [(0, 0), (0, 0), (padding, padding), (padding, padding)])
+    
     a = xp.rollaxis(a, 1, 4)
     b = xp.rollaxis(b, 1, 4); b = xp.rollaxis(b, 0, 4)
     
@@ -53,8 +63,9 @@ def corr2d2(a, b):
     Wout = a.shape[2] - b.shape[1] + 1
 
     a = as_strided(a, (a.shape[0], Hout, Wout, b.shape[0], b.shape[1], a.shape[3]), a.strides[:3] + a.strides[1:])
-
-    return xp.tensordot(a, b, axes=3)
+    out = xp.tensordot(a, b, axes=3)
+    out = xp.rollaxis(out, 3, 1)
+    return out
 
 
 

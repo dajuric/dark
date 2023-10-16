@@ -7,7 +7,7 @@ from dark.nn.init import default_init_weights
 from dark.optim import *
 from dark.utils.data import ImageFolder, DataLoader
 from dark.utils.transforms import *
-from dark.tensor import *
+import dark.tensor as xp
 
 IM_SIZE = 32
 BATCH_SIZE = 64
@@ -15,7 +15,7 @@ CLASS_COUNT = 3 # 10 for full dataset
 EPOCHS = 5
 model_path = "samples/model.pickle"
 
-print(f"Running on: {'cuda' if is_cuda() else 'cpu'}")
+print(f"Running on: {'cuda' if xp.is_cuda() else 'cpu'}")
 
 class ConvBlock(nn.Module):
     def __init__(self, in_channels, out_channels):

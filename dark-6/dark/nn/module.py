@@ -1,4 +1,4 @@
-from dark.tensor import *
+import dark.tensor as xp
 from dark import Parameter, Node
 import dark
 from dark import *
