@@ -79,7 +79,7 @@ class Sequential(Module):
 
 class ZeroParam(Parameter):
     def __init__(self, *shape):
-        val = cp.zeros(shape)
+        val = xp.zeros(shape)
         super().__init__(val)
 
 class Flatten(Module):
@@ -110,7 +110,7 @@ class ReLU(Module):
        super().__init__()
 
     def forward(self, x):
-        result = dark.max(cp.zeros(x.value.shape), x)
+        result = dark.max(xp.zeros(x.value.shape), x)
         return result
 
 class Softmax(Module):

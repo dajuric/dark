@@ -10,12 +10,12 @@ class AbsoluteValue(Operation):
 
     @staticmethod
     def _f(x):
-        return cp.abs(x)
+        return xp.abs(x)
 
     @staticmethod
     def _df(dldy, y, x):
         gz = (x > 0)
-        lz = cp.logical_not(gz)
+        lz = xp.logical_not(gz)
         return [dldy * gz - dldy * lz]
 
 class Add(Operation):
@@ -37,7 +37,7 @@ class Divide(Operation):
     @staticmethod
     def _df(dldy, y, a, b):
         dlda = dldy / b
-        dldb = -dldy * a / cp.square(b)
+        dldb = -dldy * a / xp.square(b)
 
         return reduce_sum(dlda, a.shape), reduce_sum(dldb, b.shape)
 
@@ -45,7 +45,7 @@ class Exp(Operation):
 
     @staticmethod
     def _f(x):
-        return cp.exp(x)
+        return xp.exp(x)
 
     @staticmethod
     def _df(dydl, y, x):
@@ -55,7 +55,7 @@ class Logarithm(Operation):
 
     @staticmethod
     def _f(x):
-        return cp.log(x)
+        return xp.log(x)
 
     @staticmethod
     def _df(dldy, y, x):
@@ -65,49 +65,49 @@ class MatMul(Operation):
 
     @staticmethod
     def _f(a, b):
-        y = cp.matmul(a, b)
+        y = xp.matmul(a, b)
         return y
 
     @staticmethod
     def _df(dldy, y, a, b):
-        dlda = cp.matmul(dldy, b.T)
-        dldb = cp.matmul(a.T, dldy)
+        dlda = xp.matmul(dldy, b.T)
+        dldb = xp.matmul(a.T, dldy)
         return dlda, dldb
 
 class Max(Operation):
 
     @staticmethod
     def _f(a, b):
-        return cp.maximum(a, b)
+        return xp.maximum(a, b)
 
     @staticmethod
     def _df(dldy, y, a, b):
         c = a > b
         dlda = dldy * c
-        dldb = dldy * cp.logical_not(c)
+        dldb = dldy * xp.logical_not(c)
         return dlda, dldb
 
 class Mean(Operation):
 
     @staticmethod
     def _f(x, **kwargs):
-        return cp.mean(x, **kwargs, keepdims=True)
+        return xp.mean(x, **kwargs, keepdims=True)
 
     @staticmethod
     def _df(dldy, y, x):
-        return [dldy * cp.ones(x.shape) / x.size]
+        return [dldy * xp.ones(x.shape) / x.size]
 
 class Min(Operation):
 
     @staticmethod
     def _f(a, b):
-        return cp.minimum(a, b)
+        return xp.minimum(a, b)
 
     @staticmethod
     def _df(dldy, y, a, b):
         c = a < b
         dlda = dldy * c
-        dldb = dldy * cp.logical_not(c)
+        dldb = dldy * xp.logical_not(c)
         return dlda, dldb
 
 class Mul(Operation):
@@ -127,11 +127,11 @@ class Pow(Operation):
 
     @staticmethod
     def _f(x, n):
-        return cp.power(x, n)
+        return xp.power(x, n)
 
     @staticmethod
     def _df(dldy, y, x, n):
-        return [n * cp.power(x, n - 1) * dldy]
+        return [n * xp.power(x, n - 1) * dldy]
 
 class Subtract(Operation):
 
@@ -147,17 +147,17 @@ class Sum(Operation):
 
     @staticmethod
     def _f(x, **kwargs):
-        return cp.sum(x, **kwargs, keepdims=True)
+        return xp.sum(x, **kwargs, keepdims=True)
 
     @staticmethod
     def _df(dldy, y, x):
-        return [dldy * cp.ones(x.shape)]
+        return [dldy * xp.ones(x.shape)]
 
 class SquareRoot(Operation):
 
     @staticmethod
     def _f(x):
-        return cp.sqrt(x)
+        return xp.sqrt(x)
 
     @staticmethod
     def _df(dldy, y, x):
@@ -168,12 +168,12 @@ class View(Operation):
     @staticmethod
     def _f(x, **kwargs):
         outShape = kwargs["shape"]
-        return cp.reshape(x, outShape)
+        return xp.reshape(x, outShape)
 
     @staticmethod
     def _df(dldy, y, x):
         origShape = x.shape
-        return [cp.reshape(dldy, origShape)]
+        return [xp.reshape(dldy, origShape)]
 
 class Conv2D(Operation):
 

@@ -74,5 +74,5 @@ class ToTensorV2():
         im = np.rollaxis(im, -1, 0) #channels first
         if im.ndim < 3: im = np.expand_dims(im, 0)
         
-        im = cp.array(im) #convert to CUDA array is available
+        im = xp.array(im) #convert to CUDA array is available
         return im 

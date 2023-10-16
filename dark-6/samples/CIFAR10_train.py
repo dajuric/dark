@@ -56,7 +56,7 @@ class MyConvNet(nn.Module):
 
 def get_loaders():
     def label_transform(l):
-        one_hot = cp.zeros(CLASS_COUNT, dtype=cp.float64)
+        one_hot = xp.zeros(CLASS_COUNT, dtype=xp.float64)
         one_hot[l] = 1
         return one_hot
 
@@ -105,7 +105,7 @@ def train_loop(dataloader, model, loss_fn, optimizer):
         loss.backward()
         optimizer.step()
         
-        correct += (pred.value.argmax(1) == y.argmax(1)).astype(cp.float32).sum().item()
+        correct += (pred.value.argmax(1) == y.argmax(1)).astype(xp.float32).sum().item()
 
         if batchIdx % 100 == 0:
             loss, current = loss.value.item(), batchIdx * len(X)
@@ -124,7 +124,7 @@ def test_loop(dataloader, model, loss_fn):
     for X, y in dataloader:
         pred = model(X)
         test_loss += loss_fn(pred, y).value.item()
-        correct += (pred.value.argmax(1) == y.argmax(1)).astype(cp.float32).sum().item()
+        correct += (pred.value.argmax(1) == y.argmax(1)).astype(xp.float32).sum().item()
 
     test_loss /= num_batches
     correct /= size
