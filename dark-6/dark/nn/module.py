@@ -155,8 +155,8 @@ class BatchNorm2d(Module):
         assert isinstance(dim, int)
         dim = (1, dim, 1, 1)
 
-        self.eps = eps
-        self.momentum = momentum
+        self.eps = eps           * dt.ones((1, 1, 1, 1))
+        self.momentum = momentum * dt.ones((1, 1, 1, 1))
         self.training = True
 
         # parameters (trained with backprop)

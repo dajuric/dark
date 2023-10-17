@@ -101,8 +101,8 @@ class Var(Operation):
 
     # https://math.stackexchange.com/questions/2836083/derivative-of-the-variance-wrt-x-i
     @staticmethod
-    def _df(dldy, y, x, **kwargs):
-        dim = kwargs["axis"]
+    def _df(dldy, y, x):
+        dim = dt.argmax(dt.array(x.shape) - dt.array(dldy.shape)).item() #kwargs["dim"]
         m = dt.mean(x, dim)
         return [dldy * 2 * (x - m) / x.size]
 
@@ -193,10 +193,10 @@ class Conv2D(Operation):
     @staticmethod
     def _df(dldy, y, s, k):
         p = Conv2D._get_padding(s.shape[-1], dldy.shape[-1], k.shape[-1])
-        dlds = dt.conv2d(dldy, k.transpose((1, 0, 2, 3)), dt.abs(p).item())
+        dlds = dt.conv2d(dldy, k.transpose((1, 0, 2, 3)), p) #was abs(p)
 
         p = Conv2D._get_padding(k.shape[-1], dldy.shape[-1], s.shape[-1])
-        dldk = dt.conv2d(dldy.transpose((1, 0, 2, 3)), s.transpose((1, 0, 2, 3)), dt.abs(p).item())
+        dldk = dt.conv2d(dldy.transpose((1, 0, 2, 3)), s.transpose((1, 0, 2, 3)), p) #was abs(p)
         return dlds, dldk
 
     @staticmethod

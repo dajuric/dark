@@ -9,55 +9,97 @@ from dark.utils.data import ImageFolder, DataLoader
 from dark.utils.transforms import *
 import dark.tensor as dt
 
+
+# im = dark.Parameter(dt.random.random((3, 6, 3)))
+# out = dark.add(im, 1e-5)
+# out.backward()
+# exit()
+
+# im = dark.Parameter(dt.random.random((6, 3, 160, 160)))
+# bn1 = nn.BatchNorm2d(3)
+# out = bn1(im)
+# out = dark.sum(out)
+# out.backward()
+# exit()
+
+
+
 IM_SIZE = 32
-BATCH_SIZE = 16
+BATCH_SIZE = 8
 CLASS_COUNT = 3 # 10 for full dataset
 EPOCHS = 5
 model_path = "samples/model.pickle"
 
 print(f"Running on: {'cuda' if dt.is_cuda() else 'cpu'}")
 
-class ConvBlock(nn.Module):
-    def __init__(self, in_channels, out_channels):
-        super().__init__()
+# class ConvBlock(nn.Module):
+#     def __init__(self, in_channels, out_channels):
+#         super().__init__()
 
-        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size=5, padding=0)
-        self.bn1 = nn.BatchNorm2d(out_channels)
-        self.relu = nn.ReLU()
-        self.pool = nn.MaxPool2d(2)
+#         self.conv = nn.Conv2d(in_channels, out_channels, kernel_size=5, padding=0)
+#         self.bn1 = nn.BatchNorm2d(out_channels)
+#         self.relu = nn.ReLU()
+#         self.pool = nn.MaxPool2d(2)
 
-    def forward(self, x):
-        x = self.conv(x)
-        x = self.bn1(x)
-        x = self.relu(x)
-        x = self.pool(x)
-        return x
+#     def forward(self, x):
+#         x = self.conv(x)
+#         x = self.bn1(x)
+#         x = self.relu(x)
+#         x = self.pool(x)
+#         return x
+    
+# class MyConvNet(nn.Module):
+#     def __init__(self):
+#         super().__init__()
 
-class MyConvNet(nn.Module):
-    def __init__(self):
-        super().__init__()
+#         self.network = nn.Sequential(
+#             ConvBlock(3, 6),
+#             ConvBlock(6, 16),
+#             nn.Flatten(),
 
-        self.network = nn.Sequential(
-            ConvBlock(3, 6),
-            ConvBlock(6, 16),
-            nn.Flatten(),
+#             nn.Linear(16 * 5 * 5, 120),
+#             nn.ReLU(),
 
-            nn.Linear(16 * 5 * 5, 120),
-            nn.ReLU(),
+#             nn.Linear(120, 84),
+#             nn.ReLU(),
 
-            nn.Linear(120, 84),
-            nn.ReLU(),
+#             nn.Linear(84, CLASS_COUNT)
+#         )
 
-            nn.Linear(84, CLASS_COUNT)
-        )
-
-    def forward(self, x):
-        logits = self.network(x)
-        return logits
+#     def forward(self, x):
+#         logits = self.network(x)
+#         return logits
 
 
-# IM_SIZE = 160
-# from resnet9 import ResNet9 as MyConvNet
+
+
+
+# class MyConvNet(nn.Module):
+#     def __init__(self):
+#         super().__init__()
+
+#         self.network = nn.Sequential(
+#             nn.Conv2d(3, 1, 3, 1),
+#             nn.ReLU(),
+#             nn.MaxPool2d(4),
+#             nn.Flatten(),
+
+#             nn.Linear(64, CLASS_COUNT),
+#         )
+
+#     def forward(self, x):
+#         logits = self.network(x)
+#         return logits
+
+
+
+
+
+
+
+
+IM_SIZE = 160
+from resnet9 import ResNet9 as MyConvNet
 
 def get_loaders():
     def label_transform(l):
@@ -152,7 +194,7 @@ def main():
             min_test_loss = test_loss
 
             print(f"Saving best model\n\n")
-            pickle.dump(model, open(model_path, "wb"))
+            #pickle.dump(model, open(model_path, "wb"))
 
     print("Done!")
 
