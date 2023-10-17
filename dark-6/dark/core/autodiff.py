@@ -1,7 +1,7 @@
-import dark.tensor as xp
+import dark.tensor as dt
 
 is_training = True
-precision = xp.float64
+precision = dt.float64
 
 class Node():
     op = None
@@ -11,12 +11,12 @@ class Node():
     _grad = None
 
     def __init__(self, val):
-        self.value = xp.asarray(val, dtype=precision)
+        self.value = dt.asarray(val, dtype=precision)
         if len(self.value.shape) == 0: self.value = self.value.reshape((1, 1))
 
     def backward(self):
         if self.grad is None:
-            self.grad = xp.ones_like(self.value)
+            self.grad = dt.ones_like(self.value)
 
         self._autodiff()
 
@@ -49,7 +49,7 @@ class Node():
     def __repr__(self):
         classname = type(self).__name__
         #opClass = type(self.op).__name__
-        arraystring = xp.array2string(self.value, precision=4)
+        arraystring = dt.array2string(self.value, precision=4)
         return f"({classname}): {arraystring}"
 
 class Constant(Node):
@@ -66,13 +66,13 @@ class Parameter(Node):
 
     def __init__(self, val):
         super().__init__(val)
-        self._grad = xp.zeros(self.value.shape, dtype=precision)
+        self._grad = dt.zeros(self.value.shape, dtype=precision)
 
     @Node.grad.setter
     def grad(self, value):
         if value.shape[0] > self._grad.shape[0]:
             assert self._grad.shape[0] == 1
-            value = xp.sum(value, axis=0, keepdims=True)
+            value = dt.sum(value, axis=0, keepdims=True)
 
         self._grad += value
 

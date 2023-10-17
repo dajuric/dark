@@ -1,4 +1,4 @@
-import dark.tensor as xp
+import dark.tensor as dt
 from dark import Parameter, Node
 import dark
 from dark import *
@@ -79,7 +79,7 @@ class Sequential(Module):
 
 class ZeroParam(Parameter):
     def __init__(self, *shape):
-        val = xp.zeros(shape)
+        val = dt.zeros(shape)
         super().__init__(val)
 
 class Flatten(Module):
@@ -110,7 +110,7 @@ class ReLU(Module):
        super().__init__()
 
     def forward(self, x):
-        result = dark.max(xp.zeros(x.value.shape), x)
+        result = dark.max(dt.zeros(x.value.shape), x)
         return result
 
 class Softmax(Module):
@@ -147,3 +147,40 @@ class MaxPool2d(Module):
 
     def forward(self, input):
         return dark.max_pool2d(input, self.kernel_size)
+    
+# https://stackoverflow.com/questions/64364320/how-to-implement-batchnorm2d-in-pytorch-myself
+class BatchNorm2d(Module):
+    def __init__(self, dim, eps=1e-5, momentum=0.1):
+        super().__init__()
+        assert isinstance(dim, int)
+        dim = (1, dim, 1, 1)
+
+        self.eps = eps
+        self.momentum = momentum
+        self.training = True
+
+        # parameters (trained with backprop)
+        self.gamma = Parameter(dt.ones(dim))
+        self.beta = Parameter(dt.zeros(dim))
+
+        # buffers (trained with a running 'momentum update')
+        self.running_mean = dt.zeros(dim)
+        self.running_var = dt.ones(dim)
+
+    def forward(self, x):
+        if self.training:
+            xmean = dark.mean(x, 0) # batch mean
+            xvar = dark.var(x, 0) # batch variance
+        else:
+            xmean = self.running_mean
+            xvar = self.running_var
+
+        xhat = dark.div(dark.subtract(x, xmean), dark.sqrt(dark.add(xvar, self.eps))) # normalize to unit variance
+        out = dark.add(dark.mul(self.gamma, xhat), self.beta)
+
+        # update the buffers
+        if self.training:
+            self.running_mean = (1 - self.momentum) * self.running_mean + self.momentum * xmean.value
+            self.running_var  = (1 - self.momentum) * self.running_var  + self.momentum * xvar.value
+
+        return out

@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 import random
-import dark.tensor as xp
+import dark.tensor as dt
 
 class Transform():
     def __init__(self):
@@ -74,5 +74,5 @@ class ToTensorV2():
         im = np.rollaxis(im, -1, 0) #channels first
         if im.ndim < 3: im = np.expand_dims(im, 0)
         
-        im = xp.asarray(im) #convert to CUDA array is available
+        im = dt.asarray(im) #convert to CUDA array is available
         return im 

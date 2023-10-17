@@ -7,29 +7,31 @@ from dark.nn.init import default_init_weights
 from dark.optim import *
 from dark.utils.data import ImageFolder, DataLoader
 from dark.utils.transforms import *
-import dark.tensor as xp
+import dark.tensor as dt
 
 IM_SIZE = 32
-BATCH_SIZE = 64
+BATCH_SIZE = 16
 CLASS_COUNT = 3 # 10 for full dataset
 EPOCHS = 5
 model_path = "samples/model.pickle"
 
-print(f"Running on: {'cuda' if xp.is_cuda() else 'cpu'}")
+print(f"Running on: {'cuda' if dt.is_cuda() else 'cpu'}")
 
 class ConvBlock(nn.Module):
     def __init__(self, in_channels, out_channels):
         super().__init__()
 
         self.conv = nn.Conv2d(in_channels, out_channels, kernel_size=5, padding=0)
+        self.bn1 = nn.BatchNorm2d(out_channels)
         self.relu = nn.ReLU()
         self.pool = nn.MaxPool2d(2)
 
     def forward(self, x):
-        out = self.conv(x)
-        out = self.relu(out)
-        out = self.pool(out)
-        return out
+        x = self.conv(x)
+        x = self.bn1(x)
+        x = self.relu(x)
+        x = self.pool(x)
+        return x
 
 class MyConvNet(nn.Module):
     def __init__(self):
@@ -54,9 +56,12 @@ class MyConvNet(nn.Module):
         return logits
 
 
+# IM_SIZE = 160
+# from resnet9 import ResNet9 as MyConvNet
+
 def get_loaders():
     def label_transform(l):
-        one_hot = xp.zeros(CLASS_COUNT, dtype=xp.float64)
+        one_hot = dt.zeros(CLASS_COUNT, dtype=dt.float64)
         one_hot[l] = 1
         return one_hot
 
@@ -105,7 +110,7 @@ def train_loop(dataloader, model, loss_fn, optimizer):
         loss.backward()
         optimizer.step()
         
-        correct += (pred.value.argmax(1) == y.argmax(1)).astype(xp.float32).sum().item()
+        correct += (pred.value.argmax(1) == y.argmax(1)).astype(dt.float32).sum().item()
 
         if batchIdx % 100 == 0:
             loss, current = loss.value.item(), batchIdx * len(X)
@@ -124,7 +129,7 @@ def test_loop(dataloader, model, loss_fn):
     for X, y in dataloader:
         pred = model(X)
         test_loss += loss_fn(pred, y).value.item()
-        correct += (pred.value.argmax(1) == y.argmax(1)).astype(xp.float32).sum().item()
+        correct += (pred.value.argmax(1) == y.argmax(1)).astype(dt.float32).sum().item()
 
     test_loss /= num_batches
     correct /= size
