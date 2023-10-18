@@ -18,7 +18,13 @@ class Node():
         if self.grad is None:
             self.grad = dt.ones_like(self.value)
 
-        self._autodiff()
+        order = self._topological_sort()   
+        for node in order:
+            dldx = node.op.differentiate(node)
+            
+            for k, pd in enumerate(dldx):
+                assert node.inputs[k].value.shape == pd.shape #grad has to be the same shape as the node's output
+                node.inputs[k].grad = pd
 
     def zero_grad(self):
         if self._grad is not None:
@@ -27,16 +33,23 @@ class Node():
         for node in self.inputs:
             node.zero_grad()
 
-    def _autodiff(self):
-        if self.op is not None:
-            dldx = self.op.differentiate(self)
-            for k, pd in enumerate(dldx):
-                assert self.inputs[k].value.shape == pd.shape #grad has to be the same shape as the node's output
-                self.inputs[k].grad = pd #set or add
-        
-        #print(f"{self.value.shape} of {self.op}")
-        for node in self.inputs:
-            node._autodiff()
+    def _topological_sort(self):
+        order = []
+        seen = set()
+
+        def visit(var):
+            if var in seen:
+                return
+            
+            for m in var.inputs:
+                visit(m)
+                        
+            seen.add(var)     
+            if type(var) == Node:
+                order.insert(0, var)
+
+        visit(self)
+        return order
 
     @property
     def grad(self):
@@ -44,7 +57,10 @@ class Node():
 
     @grad.setter
     def grad(self, value):
-        self._grad = value 
+        if self._grad is None:
+            self._grad = value 
+        else:
+            self._grad += value 
 
     def __repr__(self):
         classname = type(self).__name__

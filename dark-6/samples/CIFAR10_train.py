@@ -8,24 +8,11 @@ from dark.optim import *
 from dark.utils.data import ImageFolder, DataLoader
 from dark.utils.transforms import *
 import dark.tensor as dt
-
-
-# im = dark.Parameter(dt.random.random((3, 6, 3)))
-# out = dark.add(im, 1e-5)
-# out.backward()
-# exit()
-
-# im = dark.Parameter(dt.random.random((6, 3, 160, 160)))
-# bn1 = nn.BatchNorm2d(3)
-# out = bn1(im)
-# out = dark.sum(out)
-# out.backward()
-# exit()
-
+from rich.progress import track
 
 
 IM_SIZE = 32
-BATCH_SIZE = 8
+BATCH_SIZE = 128
 CLASS_COUNT = 3 # 10 for full dataset
 EPOCHS = 5
 model_path = "samples/model.pickle"
@@ -70,35 +57,6 @@ print(f"Running on: {'cuda' if dt.is_cuda() else 'cpu'}")
 #         logits = self.network(x)
 #         return logits
 
-
-
-
-
-# class MyConvNet(nn.Module):
-#     def __init__(self):
-#         super().__init__()
-
-#         self.network = nn.Sequential(
-#             nn.Conv2d(3, 1, 3, 1),
-#             nn.ReLU(),
-#             nn.MaxPool2d(4),
-#             nn.Flatten(),
-
-#             nn.Linear(64, CLASS_COUNT),
-#         )
-
-#     def forward(self, x):
-#         logits = self.network(x)
-#         return logits
-
-
-
-
-
-
-
-
-IM_SIZE = 160
 from resnet9 import ResNet9 as MyConvNet
 
 def get_loaders():
@@ -143,7 +101,7 @@ def train_loop(dataloader, model, loss_fn, optimizer):
     size = len(dataloader.dataset)
     correct = 0.0
 
-    for batchIdx, (X, y) in enumerate(dataloader):
+    for batchIdx, (X, y) in enumerate(track(dataloader, "Training")):
         optimizer.zero_grad()
         
         pred = model(X)
@@ -168,7 +126,7 @@ def test_loop(dataloader, model, loss_fn):
     num_batches = len(dataloader)
     test_loss, correct = 0, 0
 
-    for X, y in dataloader:
+    for X, y in track(dataloader, "Testing"):
         pred = model(X)
         test_loss += loss_fn(pred, y).value.item()
         correct += (pred.value.argmax(1) == y.argmax(1)).astype(dt.float32).sum().item()
@@ -182,7 +140,7 @@ def main():
     tr_loader, te_loader = get_loaders()
     model = get_net()
     loss_fn = nn.CrossEntropyLoss()
-    optimizer = SGD(model.parameters(), lr=1e-2, momentum=0.9)
+    optimizer = SGD(model.parameters(), lr=0.5e-3, momentum=0.9)
     min_test_loss = float("inf")
 
     for e in range(EPOCHS):
