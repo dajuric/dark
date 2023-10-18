@@ -8,7 +8,7 @@ class ConvBlock(nn.Module):
 
         list = [
             nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1), 
-            nn.BatchNorm2d(out_channels), 
+            #nn.BatchNorm2d(out_channels), 
             nn.ReLU(),
         ]
 
@@ -21,7 +21,7 @@ class ConvBlock(nn.Module):
         return self.layers(x)
 
 class ResNet9(nn.Module):
-    def __init__(self, in_channels=3, num_classes=3):
+    def __init__(self, in_channels=3, num_classes=2):
         super().__init__()
         
         self.conv1 = ConvBlock(in_channels, 64)
