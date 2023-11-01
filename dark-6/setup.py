@@ -7,5 +7,5 @@ setup(
     # packages=find_packages(exclude=["test_*"]),
     packages=["dark"],
     package_dir={"dark": "dark"},
-    install_requires = ["numpy", "opencv-python", "numba"]
+    install_requires = ["numpy", "opencv-python", "numba", "cupy", "rich"]
     )

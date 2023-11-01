@@ -4,6 +4,7 @@ build/
 __pycache__
 
 #ignore all databases
+**/db/**
 **/db-*/**
 #all serialized models
 *.pickle

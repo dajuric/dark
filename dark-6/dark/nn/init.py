@@ -17,25 +17,25 @@ def _calc_in_out_dims(t_shape):
 
 # the idea is taken from the Pytorch code (torch.nn.init.py)
 def xavier_uniform_(tensor):
-    t_shape = tensor.value.shape
+    t_shape = tensor.data.shape
     in_maps, out_maps = _calc_in_out_dims(t_shape)
 
     std = dt.sqrt(2.0 / (in_maps + out_maps))
     a = dt.sqrt(3.0) * std
-    tensor.value = dt.random.uniform(-a, +a, size=t_shape)
+    tensor.data = dt.random.uniform(-a, +a, size=t_shape)
 
 
 def random_uniform_(tensor, a, b):
-    t_shape = tensor.value.shape
-    tensor.value = (b - a) * dt.random.rand(*t_shape) + a
+    t_shape = tensor.data.shape
+    tensor.data = (b - a) * dt.random.rand(*t_shape) + a
 
 
 def default_init_weights(m):
-    if isinstance(m, module.Conv2d):
+    if isinstance(m, module.Conv2d) or isinstance(m, module.ConvTranspose2d):
         xavier_uniform_(m.weights)
         xavier_uniform_(m.bias)
 
     if isinstance(m, module.Linear):
-        stdv = 1. / dt.sqrt(m.weights.value.shape[1])
+        stdv = 1. / dt.sqrt(m.weights.data.shape[1])
         random_uniform_(m.weights, -stdv, stdv)
         random_uniform_(m.bias, -stdv, stdv)

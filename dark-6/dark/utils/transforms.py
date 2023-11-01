@@ -1,7 +1,6 @@
 import cv2
 import numpy as np
 import random
-import dark.tensor as dt
 
 class Transform():
     def __init__(self):
@@ -43,6 +42,36 @@ class FlipHorizontal():
 
         flippedIm = cv2.flip(im, 1)
         return flippedIm
+    
+class FlipVertical():
+    def __init__(self, p=0.5):
+        super().__init__()
+        self.p = p
+
+    def __call__(self, im):
+        if random.random() < self.p:
+            return im
+
+        flippedIm = cv2.flip(im, 0)
+        return flippedIm
+    
+class Rotate():
+    def __init__(self, limit, p=0.5):
+        super().__init__()
+        self.p = p
+        self.limit = limit
+
+    def __call__(self, im):
+        if random.random() < self.p:
+            return im
+
+        angle = int(2 * self.limit * random.random() - self.limit)
+        h, w, _ = im.shape
+        cX, cY = (w // 2, h // 2)
+
+        M = cv2.getRotationMatrix2D((cX, cY), angle, 1.0)
+        rotatedIm = cv2.warpAffine(im, M, (w, h))
+        return rotatedIm
 
 class Grayscale():
     def __init__(self):
@@ -71,8 +100,8 @@ class ToTensorV2():
         super().__init__()
 
     def __call__(self, im):
+        if im.ndim < 3: 
+            im = np.expand_dims(im, -1)
+            
         im = np.rollaxis(im, -1, 0) #channels first
-        if im.ndim < 3: im = np.expand_dims(im, 0)
-        
-        im = dt.asarray(im) #convert to CUDA array is available
         return im 

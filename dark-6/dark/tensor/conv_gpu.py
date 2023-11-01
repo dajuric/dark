@@ -1,40 +1,25 @@
 import cupy as cp
 from cupy.lib.stride_tricks import as_strided
 
-def _swap_conv_args_needed(tensor, kernel, padding):
-    sb, sc, sh, sw = tensor.shape
-    kb, kc, kh, kw = kernel.shape
-
-    oh = sh - kh + 2 * padding + 1
-    ow = sw - kw + 2 * padding + 1
-
-    if oh < 0 or ow < 0:
-        return kernel, tensor
-
-    return tensor, kernel 
-
-def corr2d_gpu(tensor, kernel, padding):
+# https://medium.com/latinxinai/vectorized-convolution-operation-using-numpy-b122fd52fba3
+def corr2d(tensor, kernel, padding, stride):
     assert len(tensor.shape) == 4 #b, c, w, h
     assert len(kernel.shape) == 4 #b, c, w, h
 
-    tensor, kernel = _swap_conv_args_needed(tensor, kernel, padding)
     tensor = cp.pad(tensor, [(0, 0), (0, 0), (padding, padding), (padding, padding)])
     
-    tensor = cp.rollaxis(tensor, 1, 4)
-    kernel = cp.rollaxis(kernel, 1, 4); kernel = cp.rollaxis(kernel, 0, 4)
+    tb, tc, th, tw = tensor.shape
+    kb, kc, kh, kw = kernel.shape
+    sb, sc, sh, sw = tensor.strides
     
-    tb, th, tw, tc = tensor.shape
-    kh, kw, kc, kb = kernel.shape
-    sb, sh, sw, sc = tensor.strides
-    
-    oh = th - kh + 1
-    ow = tw - kw + 1
+    oh = int((th - kh) / stride + 1)
+    ow = int((tw - kw) / stride + 1)
 
-    out_shape = (tb, oh, ow, kh, kw, tc)
-    strides   = (sb, sh, sw,  sh, sw, sc) 
-    tensor = as_strided(tensor, out_shape, strides)
-    
-    out = cp.tensordot(tensor, kernel, axes=3)
-    out = cp.rollaxis(out, 3, 1)
+    out_shape   = (tb, tc, oh, ow, kh, kw)
+    out_strides = (sb, sc, stride * sh, stride * sw, sh, sw) 
+    windowed_tensor = as_strided(tensor, out_shape, out_strides)
+
+    out = cp.einsum('bchwkt,fckt->bfhw', windowed_tensor, kernel, optimize=True) 
+    #out = cp.tensordot(windowed_tensor, kernel, axes=3)
     return out
 

@@ -1,29 +1,27 @@
 import dark.tensor as dt
 
-is_training = True
-precision = dt.float64
-
 class Node():
     op = None
     inputs = []
 
-    value = None
+    data = None
+    requires_grad = True
     _grad = None
 
     def __init__(self, val):
-        self.value = dt.asarray(val, dtype=precision)
-        if len(self.value.shape) == 0: self.value = self.value.reshape((1, 1))
+        self.data = dt.asarray(val)
+        if len(self.data.shape) == 0: self.data = self.data.reshape((1, 1))
 
     def backward(self):
         if self.grad is None:
-            self.grad = dt.ones_like(self.value)
+            self.grad = dt.ones_like(self.data)
 
         order = self._topological_sort()   
         for node in order:
             dldx = node.op.differentiate(node)
             
             for k, pd in enumerate(dldx):
-                assert node.inputs[k].value.shape == pd.shape #grad has to be the same shape as the node's output
+                assert node.inputs[k].data.shape == pd.shape #grad has to be the same shape as the node's output
                 node.inputs[k].grad = pd
 
     def zero_grad(self):
@@ -32,6 +30,12 @@ class Node():
 
         for node in self.inputs:
             node.zero_grad()
+
+    def detach(self):
+        n = Constant(self.data.copy())
+        n.requires_grad = False
+        
+        return n
 
     def _topological_sort(self):
         order = []
@@ -56,16 +60,16 @@ class Node():
         return self._grad
 
     @grad.setter
-    def grad(self, value):
+    def grad(self, data):
         if self._grad is None:
-            self._grad = value 
+            self._grad = data 
         else:
-            self._grad += value 
+            self._grad += data 
 
     def __repr__(self):
         classname = type(self).__name__
         #opClass = type(self.op).__name__
-        arraystring = dt.array2string(self.value, precision=4)
+        arraystring = dt.array2string(self.data, precision=4)
         return f"({classname}): {arraystring}"
 
 class Constant(Node):
@@ -82,48 +86,37 @@ class Parameter(Node):
 
     def __init__(self, val):
         super().__init__(val)
-        self._grad = dt.zeros(self.value.shape, dtype=precision)
 
-    @Node.grad.setter
-    def grad(self, value):
-        if value.shape[0] > self._grad.shape[0]:
-            assert self._grad.shape[0] == 1
-            value = dt.sum(value, axis=0, keepdims=True)
-
-        self._grad += value
 
 class Operation():
 
     @classmethod
-    def apply(op, *inputs, **kwargs):
+    def apply(op_cls, *inputs, **kwargs):
         inputs = list(inputs)
         for k, n in enumerate(inputs):
             if isinstance(n, Node): continue
             inputs[k] = Constant(n)
 
-        x = [n.value for n in inputs]
-        y = op._f(*x, **kwargs)
+        op = op_cls()
+        x = [n.data for n in inputs]
+        y = op.forward(*x, **kwargs)
 
         out_node = Node(y)
-        if is_training:
-            out_node.op = op
-            out_node.inputs = inputs
+        out_node.op = op
+        out_node.inputs = inputs
         
         return out_node
 
-    @classmethod
-    def differentiate(op, node):
+    def differentiate(self, node):
         dldy = node.grad
-        x = [n.value for n in node.inputs]
-        y = node.value
+        x = [n.data for n in node.inputs]
+        y = node.data
 
-        result = op._df(dldy, y, *x)
+        result = self.backward(dldy, y, *x)
         return result
 
-    @staticmethod
-    def _f(x):
+    def forward(self, x):
         raise NotImplementedError()
 
-    @staticmethod
-    def _df(dldy, y, *x):
+    def backward(self, grad, out, *inputs):
         raise NotImplementedError()

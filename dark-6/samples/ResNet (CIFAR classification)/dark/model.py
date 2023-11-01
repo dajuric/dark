@@ -8,7 +8,7 @@ class ConvBlock(nn.Module):
 
         list = [
             nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1), 
-            #nn.BatchNorm2d(out_channels), 
+            nn.BatchNorm2d(out_channels), 
             nn.ReLU(),
         ]
 
@@ -20,11 +20,11 @@ class ConvBlock(nn.Module):
     def forward(self, x):
         return self.layers(x)
 
-class ResNet9(nn.Module):
-    def __init__(self, in_channels=3, num_classes=2):
+class Resnet9(nn.Module):
+    def __init__(self, num_classes=2):
         super().__init__()
         
-        self.conv1 = ConvBlock(in_channels, 64)
+        self.conv1 = ConvBlock(3, 64)
         self.conv2 = ConvBlock(64, 128, pool=True, pool_no=4)
         self.res1 = nn.Sequential(ConvBlock(128, 128), ConvBlock(128, 128))
         
@@ -49,8 +49,8 @@ class ResNet9(nn.Module):
     
 
 if __name__ == "__main__":
-    model = ResNet9()
+    model = Resnet9()
     
     im = dark.Parameter(dt.random.random((1, 3, 32, 32)))
     result = model(im)
-    print(result.value.shape)
+    print(result.data.shape)
