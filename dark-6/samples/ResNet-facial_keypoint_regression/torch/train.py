@@ -7,7 +7,6 @@ import torch.optim as optim
 import os
 import random
 from glob import glob
-import numpy as np
 from rich.progress import track
 
 from model import Resnet9
@@ -21,10 +20,10 @@ print(f"Using: {device}")
 script_dir = os.path.dirname(os.path.realpath(__file__))
 model_path = f"{script_dir}/model.pth"
 
-IM_SIZE = 64
+IM_SIZE = 128
 KEYPOINT_COUNT = 14 * 2
 BATCH_SIZE = 64
-EPOCHS = 5
+EPOCHS = 10
 
 def get_loaders():
     trTransforms = Compose([   
@@ -82,7 +81,7 @@ def train_loop(train_loader, model, criterion, optimizer):
         train_loss += loss.item()
 
     train_loss = train_loss / len(train_loader)
-    print(f"Train: loss: {train_loss:>0.1f}") 
+    print(f"Train: loss: {(train_loss * 100):>0.1f}") 
     return train_loss
 
 @torch.no_grad()
@@ -100,7 +99,7 @@ def test_loop(val_loader, model, criterion, epoch):
         val_loss += loss.item()
 
     val_loss = val_loss / len(val_loader)
-    print(f"Eval: loss: {(val_loss):>0.1f}") 
+    print(f"Eval: loss: {(val_loss * 100):>0.1f}") 
 
     save_samples(val_loader.dataset, model, f"{script_dir}/samples-{epoch}.png", device=device)
     return val_loss
@@ -110,7 +109,7 @@ def main():
     tr_loader, te_loader = get_loaders()
     model = get_net()
     loss_fn = nn.MSELoss()
-    optimizer = optim.SGD(model.parameters(), lr=1e-2, momentum=0.9)
+    optimizer = optim.Adam(model.parameters(), lr=1e-3) #optim.SGD(model.parameters(), lr=1e-3, momentum=0.9)
     min_test_loss = float("inf")
 
     for e in range(EPOCHS):

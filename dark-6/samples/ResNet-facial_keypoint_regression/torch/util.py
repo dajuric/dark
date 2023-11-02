@@ -24,9 +24,10 @@ def save_samples(dataset, model, filename, grid = (3, 5), device = "cpu"):
             prediction = model(im.unsqueeze(0).to(device)).cpu().numpy()
 
             im = (im * 127 + 127).type(torch.uint8).numpy()
-            im = np.ascontiguousarray(np.moveaxis(im, 0, 2))
+            im = cv2.cvtColor(np.moveaxis(im, 0, 2), cv2.COLOR_BGR2RGB)
+            im = np.ascontiguousarray(im)
 
-            _draw_keypoints(im, target, (255, 255, 0))
+            _draw_keypoints(im, target, (255, 0, 0))
             _draw_keypoints(im, prediction, (0, 255, 0))
 
             image_row.append(im)

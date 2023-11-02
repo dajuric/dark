@@ -32,7 +32,7 @@ class Resnet9(nn.Module):
         self.res2 = nn.Sequential(ConvBlock(512, 512), ConvBlock(512, 512))
         
         self.classifier = nn.Sequential(nn.Flatten(), 
-                                        nn.Linear(512, out_dim))
+                                        nn.Linear(2048, out_dim))
                 
     def forward(self, xb):
         out = self.conv1(xb)

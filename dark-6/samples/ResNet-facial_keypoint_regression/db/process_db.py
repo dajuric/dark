@@ -44,8 +44,8 @@ def normalize_keypoints(keypoints, bbox):
     norm_keypoints = []
 
     for x, y in keypoints.reshape(-1, 2):
-        x = max(min(x, bx + bw), bx)
-        y = max(min(y, by + bh), by)
+        x = max(min(x - bx, bx + bw), bx)
+        y = max(min(y - by, by + bh), by)
 
         x /= bw
         y /= bh
