@@ -8,5 +8,6 @@ __pycache__
 **/db-*/**
 #all serialized models
 *.pickle
-#unignore all md files
+#unignore all md and py files
 !*.md
+!*.py
