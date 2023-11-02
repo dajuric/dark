@@ -9,7 +9,9 @@ mp_face_detection = mp.solutions.face_detection
 
 script_dir = os.path.dirname(os.path.realpath(__file__))
 
-def read_csv(csv_file):
+def read_keypoints(csv_file):
+    
+    
     table = np.genfromtxt(csv_file, delimiter=",", dtype=np.object_, skip_header=True)
     filenames = table[:, 0].astype(np.string_)
     keypoints = table[:, 1:].astype(np.int32)
@@ -56,7 +58,7 @@ def normalize_keypoints(keypoints, bbox):
 def main(ims_path, kp_file):
     face_det = mp_face_detection.FaceDetection(model_selection=0, min_detection_confidence=0.5)
     im_files = [x for x in os.listdir(ims_path) if x.endswith(".jpg")]
-    keypoints = read_csv(kp_file)
+    keypoints = read_keypoints(kp_file)
 
     for im_file in track(im_files):
         im_keypoints = keypoints[im_file]
@@ -73,4 +75,4 @@ def main(ims_path, kp_file):
         json.dump(obj, open(os.path.join(ims_path, basename + ".json"), "w"))
 
 if __name__ == "__main__":
-    main(f"{script_dir}/images/", f"{script_dir}/gt.csv")
+    main(f"{script_dir}/images/", f"{script_dir}/all_data.json")
