@@ -17,7 +17,7 @@ class KeypointDataset(Dataset):
 
         kp_data = json.load(open(kp_file, "r"))
         x, y, w, h = kp_data["bbox"]
-        norm_kps = kp_data["norm_keypoints"]
+        kps = kp_data["bbox_keypoints"]
 
         img = cv2.imread(im_file)
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
@@ -25,4 +25,6 @@ class KeypointDataset(Dataset):
         img = img[y:y+h, x:x+w, :]
         img = self.im_transform(img)
        
-        return img, np.array(norm_kps, dtype=np.float32)
+        kps = np.array(kps, dtype=np.float32)
+        kps = kps.reshape(-1, 2) / np.array([w, h], dtype=np.float32)
+        return img, kps.reshape(-1)

@@ -184,49 +184,20 @@ class Conv2d(Operation):
     def forward(self, x, k, **kwargs):
         self.padding = kwargs["padding"]
         self.stride = kwargs["stride"]
-        return dt.corr2d(x, k, self.padding, self.stride)
+        return dt.conv_forward(x, k, self.padding, self.stride)
 
-    def backward(self, dldy, y, x, k):
-        _, _, k_h, k_w = k.shape 
-        dldye = self.dilate(dldy, self.stride)
-
-        #pad gradient and convolve w.r.t k
-        dldx = dt.conv2d(dldye, k.transpose((1, 0, 2, 3)), k_h - 1, 1)
-        dldx = self.pad(dldx, x.shape)
-
-        #dilate x, convolve w.r.t dilated x and crop valid part
-        dldk = dt.corr2d(x.transpose((1, 0, 2, 3)), dldye.transpose((1, 0, 2, 3)), self.padding, 1)
-        dldk = self.pad(dldk, k.shape)
-        dldk = dt.swapaxes(dldk, 0, 1)
-        
+    def backward(self, dldy, y, x, k):        
+        dldx, dldk = dt.conv_backward(dldy, x, k, self.stride, self.padding)        
         return dldx, dldk
-    
-    def pad(self, do, o_shape):
-        _, _, o_h, o_w = o_shape
-
-        _, _, do_h, do_w = do.shape
-        crop_padding = round((do_h - o_h) / 2)
-        do = do[..., crop_padding:o_h + crop_padding, crop_padding:o_w + crop_padding]
-
-        _, _, do_h, do_w = do.shape
-        do = dt.pad(do, [(0, 0), (0, 0), (0, o_h - do_h), (0, o_w - do_w)])
-        return do
-
-    def dilate(self, x, stride):
-        tb, tc, th, tw = x.shape
-        xe = dt.zeros((tb, tc, (th - 1) * stride + 1, (tw - 1) * stride + 1))
-        xe[:, :, ::self.stride, ::self.stride] = x
-
-        return xe
 
 class MaxPool2d(Operation):
 
     def forward(self, x, **kwargs):
         self.kernel_size = kwargs["kernel_size"]
-        return dt.max_pool_2d(x, self.kernel_size)
+        return dt.maxpool_forward(x, self.kernel_size, 0, self.kernel_size)
 
     def backward(self, dldy, y, x):
-        dldx = dt.max_unpool_2d(dldy, x, self.kernel_size)
+        dldx = dt.maxpool_backward(dldy, x, self.kernel_size, 0, self.kernel_size)
         return [dldx]
     
 # https://towardsdatascience.com/what-is-transposed-convolutional-layer-40e5e6e31c11

@@ -1,8 +1,8 @@
 _is_cuda = False
 try:
     from cupy import *
-    from .conv_gpu import corr2d
-    from .pool_gpu import max_pool_2d, max_unpool_2d
+    from .conv_gpu import conv_forward, conv_backward, maxpool_forward, maxpool_backward
+    #from .pool_gpu import max_pool_2d, max_unpool_2d
     _is_cuda = True
 except:
     from numpy import *
