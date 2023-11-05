@@ -1,0 +1,38 @@
+import dark
+from dark.nn import *
+
+class Generator(Module):
+    def __init__(self, nz, ngf, nc):
+        super().__init__()
+        
+        self.nn = Sequential(
+            # input: Z
+            ConvTranspose2d(nz, ngf * 8, kernel_size=4, stride=1, padding=0),
+            BatchNorm2d(ngf * 8),
+            ReLU(),
+
+            #State: (ngf * 8) x 4 x 4
+            ConvTranspose2d(ngf * 8, ngf * 4, kernel_size=4, stride=2, padding=1),
+            BatchNorm2d(ngf * 4),
+            ReLU(),
+
+            #State: (ngf * 4) x 8 x 8
+            ConvTranspose2d(ngf * 4, ngf * 2, kernel_size=4, stride=2, padding=1),
+            BatchNorm2d(ngf * 2),
+            ReLU(),
+
+            #State: (ngf * 2) x 16 x 16
+            ConvTranspose2d(ngf * 2, ngf, kernel_size=4, stride=2, padding=1),
+            BatchNorm2d(ngf),
+            ReLU(),
+
+            #State: (ngf) x 32 x 32
+            ConvTranspose2d(ngf, nc, kernel_size=4, stride=2, padding=1),
+
+            #State: nc x 64 x 64
+        )
+
+    def forward(self, input):
+        x = self.nn(input)
+        x = dark.tanh(x)
+        return x
