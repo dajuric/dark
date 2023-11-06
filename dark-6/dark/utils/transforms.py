@@ -81,6 +81,55 @@ class Grayscale():
         resizedIm = cv2.cvtColor(im, cv2.COLOR_RGB2GRAY)
         return resizedIm
 
+class GaussianBlur():
+    def __init__(self, kernel_size=(7, 7), sigma_limit=(0.01, 1.5), p=0.5):
+        self.p = p
+        self.kernel_size = kernel_size
+        self.sigma_limit = sigma_limit
+
+    def __call__(self, im):
+        if random.random() < self.p:
+            return im
+        
+        min_s, max_s = self.sigma_limit
+        sigma = random.random() * (max_s - min_s) + min_s
+
+        im = cv2.GaussianBlur(im, self.kernel_size, sigma)
+        return im
+
+class JitterBrightness():
+    def __init__(self, brightness=(-0.2, 0.2), p=0.5):
+        self.brightness_range = brightness
+        self.p = p
+
+    def __call__(self, im):
+        if random.random() < self.p:
+            return im
+        
+        min_b, max_b = self.brightness_range
+        brightness_factor = random.random() * (max_b - min_b) + min_b
+
+        im += brightness_factor 
+        return im         
+
+
+class JitterContrast():
+    def __init__(self, contrast=(-0.2, 0.2), p=0.5):
+        self.contrast_range = contrast
+        self.p = p
+
+    def __call__(self, im):
+        if random.random() < self.p:
+            return im
+        
+        min_c, max_c = self.contrast_range
+        contrast_factor = random.random() * (max_c - min_c) + min_c
+
+        mean = im.mean()
+        im = (im - mean) * contrast_factor + mean
+        return im
+        
+
 class Normalize():
     def __init__(self, mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5], max_pixel_value=255.0):
          super().__init__()

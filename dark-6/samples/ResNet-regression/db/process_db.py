@@ -64,8 +64,6 @@ def shift_keypoints(keypoints, bbox):
         x = max(min(x - bx, bw), 0)
         y = max(min(y - by, bh), 0)
 
-        #x /= bw
-        #y /= bh
         norm_keypoints.extend((x, y))
 
     return norm_keypoints
