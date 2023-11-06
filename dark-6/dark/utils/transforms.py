@@ -97,7 +97,7 @@ class GaussianBlur():
         im = cv2.GaussianBlur(im, self.kernel_size, sigma)
         return im
 
-class JitterBrightness():
+class BrightnessJitter():
     def __init__(self, brightness=(-0.2, 0.2), p=0.5):
         self.brightness_range = brightness
         self.p = p
@@ -109,10 +109,11 @@ class JitterBrightness():
         min_b, max_b = self.brightness_range
         brightness_factor = random.random() * (max_b - min_b) + min_b
 
-        im += brightness_factor 
+        im = im + brightness_factor * 255
+        im = im.astype(np.uint8)
         return im         
 
-class JitterContrast():
+class ContrastJitter():
     def __init__(self, contrast=(-0.2, 0.2), p=0.5):
         self.contrast_range = contrast
         self.p = p
@@ -125,7 +126,9 @@ class JitterContrast():
         contrast_factor = random.random() * (max_c - min_c) + min_c
 
         mean = im.mean()
-        im = (im - mean) * contrast_factor + mean
+        im = (im - mean) * contrast_factor * 255 + mean
+        
+        im = im.astype(np.uint8)
         return im
         
 

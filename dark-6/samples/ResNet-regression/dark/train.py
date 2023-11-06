@@ -14,6 +14,7 @@ import pickle
 from model import Resnet18
 from dataset import KeypointDataset
 from util import save_samples
+import point_transforms as P
 
 
 print(f"Running on: {'cuda' if dt.is_cuda() else 'cpu'}")
@@ -22,20 +23,36 @@ model_path = f"{script_dir}/model.pth"
 
 IM_SIZE = 96
 KEYPOINT_COUNT = 68 * 2
-BATCH_SIZE = 16
+BATCH_SIZE = 64
 EPOCHS = 10
 
 def get_loaders():
-    trTransforms = Compose(   
+    tr_im_transforms = Compose(   
+        Resize(IM_SIZE, IM_SIZE),
+        Rotate(limit=90),
+        GaussianBlur(kernel_size=(3, 7), sigma_limit=(0.01, 1.5)),
+        BrightnessJitter(brightness=(-0.2, 0.2)),
+        ContrastJitter(contrast=(-0.2, 0.2)),
+        Normalize(0.5, 0.5),
+        ToTensorV2(),
+    )
+    
+    tr_pt_transforms = P.Compose(
+        P.Resize(IM_SIZE, IM_SIZE),
+        P.Rotate(limit=90),
+        P.Normalize()
+    )
+    
+
+    te_im_transforms = Compose(
         Resize(IM_SIZE, IM_SIZE),
         Normalize(0.5, 0.5),
         ToTensorV2(),
     )
-
-    teTransforms = Compose(
-        Resize(IM_SIZE, IM_SIZE),
-        Normalize(0.5, 0.5),
-        ToTensorV2(),
+    
+    te_kp_transforms = P.Compose(
+        P.Resize(IM_SIZE, IM_SIZE),
+        P.Normalize()
     )
 
     kp_files = sorted(glob(f"{script_dir}/../db/images/*.json"))
@@ -44,10 +61,10 @@ def get_loaders():
     tr_portion = 0.8
     tr_files_count = int(tr_portion * len(kp_files))
 
-    trSet = KeypointDataset(kp_files[:tr_files_count], trTransforms)
+    trSet = KeypointDataset(kp_files[:tr_files_count], tr_im_transforms, tr_pt_transforms)
     trLoader = DataLoader(trSet, BATCH_SIZE, shuffle=True)
 
-    teSet = KeypointDataset(kp_files[tr_files_count:], teTransforms)
+    teSet = KeypointDataset(kp_files[tr_files_count:], te_im_transforms, te_kp_transforms)
     teLoader = DataLoader(teSet, BATCH_SIZE)
 
     return trLoader, teLoader
@@ -80,6 +97,8 @@ def train_loop(train_loader, model, criterion, optimizer):
 
     train_loss = train_loss / len(train_loader)
     print(f"Train: loss: {(train_loss * 100):>0.2f}") 
+    
+    save_samples(train_loader.dataset, model, f"{script_dir}/samples-train.png")
     return train_loss
 
 def test_loop(val_loader, model, criterion, epoch):
