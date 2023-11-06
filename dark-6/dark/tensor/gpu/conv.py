@@ -1,45 +1,40 @@
 import cupy as cp
 from .util import im2col, col2im
 
-def conv2d_forward(X, W, padding, stride):
-    m,  _, xH, xW = X.shape
-    nF, _, HF, WF = W.shape 
+def conv2d_forward(X, W, stride, padding):
+    n_filters, d_filter, h_filter, w_filter = W.shape
+    n_x, d_x, h_x, w_x = X.shape
 
-    X_col = im2col(X, HF, WF, stride, padding)
-    w_col = W.reshape((nF, -1))
+    h_out = (h_x - h_filter + 2 * padding) / stride + 1
+    w_out = (w_x - w_filter + 2 * padding) / stride + 1
 
-    # Perform matrix multiplication.
-    out = w_col @ X_col
-    
-    # Reshape back matrix to image.
-    n_H = int((xH + 2 * padding - HF) / stride) + 1
-    n_W = int((xW + 2 * padding - WF) / stride) + 1
-    
-    out = cp.array(cp.hsplit(out, m)).reshape((m, nF, n_H, n_W))
+    if not h_out.is_integer() or not w_out.is_integer():
+        raise Exception('Invalid output dimension!')
+
+    h_out, w_out = int(h_out), int(w_out)
+
+    X_col = im2col(X, h_filter, w_filter, padding=padding, stride=stride)
+    W_col = W.reshape(n_filters, -1)
+
+    out = W_col @ X_col
+    out = out.reshape(n_filters, h_out, w_out, n_x)
+    out = out.transpose(3, 0, 1, 2)
+
     return out
 
 def conv2d_backward(dout, X, W, stride, padding):
-    m, _, _, _ = X.shape
-    oF, iF, HF, WF = W.shape 
-    
-    X_col = im2col(X, HF, WF, stride, padding)
-    w_col = W.reshape((oF, -1))
-   
-    # Reshape dout properly.
-    dout = dout.reshape(dout.shape[0] * dout.shape[1], dout.shape[2] * dout.shape[3])
-    dout = cp.array(cp.vsplit(dout, m))
-    dout = cp.concatenate(dout, axis=-1)
-    
-    # Perform matrix multiplication between reshaped dout and w_col to get dX_col.
-    dX_col = w_col.T @ dout
-    
-    # Perform matrix multiplication between reshaped dout and X_col to get dW_col.
-    dw_col = dout @ X_col.T
-    
-    # Reshape back to image (col2im).
-    dX = col2im(dX_col, X.shape, HF, WF, stride, padding)
-    
-    # Reshape dw_col into dw.
-    dW = dw_col.reshape((dw_col.shape[0], iF, HF, WF))
+    n_filter, d_filter, h_filter, w_filter = W.shape
+    X_col = im2col(X, h_filter, w_filter, padding=padding, stride=stride)
+
+    db = cp.sum(dout, axis=(0, 2, 3))
+    db = db.reshape(n_filter, -1)
+
+    dout_reshaped = dout.transpose(1, 2, 3, 0).reshape(n_filter, -1)
+    dW = dout_reshaped @ X_col.T
+    dW = dW.reshape(W.shape)
+
+    W_reshape = W.reshape(n_filter, -1)
+    dX_col = W_reshape.T @ dout_reshaped
+    dX = col2im(dX_col, X.shape, h_filter, w_filter, padding=padding, stride=stride)
 
     return dX, dW

@@ -157,7 +157,6 @@ class Softmax(Module):
 class Conv2d(Module):
     def __init__(self, in_channels, out_channels, kernel_size, padding = 0, stride = 1):
         super().__init__()
-        assert isinstance(kernel_size, int)
 
         self.weights = ZeroParam(out_channels, in_channels, kernel_size, kernel_size)
         self.bias    = ZeroParam(1,            out_channels, 1,          1)
@@ -166,17 +165,17 @@ class Conv2d(Module):
         self.stride = stride
 
     def forward(self, input):
-        return dark.add(dark.conv2d(input, self.weights, self.padding, self.stride), self.bias)
+        return dark.add(dark.conv2d(input, self.weights, self.stride, self.padding), self.bias)
 
 class MaxPool2d(Module):
-    def __init__(self, kernel_size = 2):
+    def __init__(self, kernel_size = 2, stride = 2):
         super().__init__()
-        assert isinstance(kernel_size, int)
 
         self.kernel_size = kernel_size
+        self.stride = stride
 
     def forward(self, input):
-        return dark.max_pool2d(input, self.kernel_size)
+        return dark.max_pool2d(input, self.kernel_size, self.stride)
     
 # https://stackoverflow.com/questions/64364320/how-to-implement-batchnorm2d-in-pytorch-myself
 class BatchNorm2d(Module):
@@ -229,7 +228,7 @@ class ConvTranspose2d(Module):
         self.output_padding = output_padding
       
     def forward(self, input):
-        return dark.add(dark.conv_transpose2d(input, self.weights, self.padding, self.stride, self.output_padding), self.bias)
+        return dark.add(dark.conv_transpose2d(input, self.weights, self.stride, self.padding, self.output_padding), self.bias)
     
 class Dropout(Module):
     def __init__(self, p = 0.2):

@@ -1,72 +1,50 @@
 import cupy as cp
 
-def get_indices(X_shape, HF, WF, stride, pad):
-    # get input size
-    m, n_C, n_H, n_W = X_shape
+def get_indices(x_shape, field_height, field_width, padding=1, stride=1):
+    N, C, H, W = x_shape
+    assert (H + 2 * padding - field_height) % stride == 0
+    assert (W + 2 * padding - field_height) % stride == 0
 
-    # get output size
-    out_h = int((n_H + 2 * pad - HF) / stride) + 1
-    out_w = int((n_W + 2 * pad - WF) / stride) + 1
-  
-    # ----Compute matrix of index i----
+    out_height = int((H + 2 * padding - field_height) / stride + 1)
+    out_width = int((W + 2 * padding - field_width) / stride + 1)
 
-    # Level 1 vector.
-    level1 = cp.repeat(cp.arange(HF), WF)
-    # Duplicate for the other channels.
-    level1 = cp.tile(level1, n_C)
-    # Create a vector with an increase by 1 at each level.
-    everyLevels = stride * cp.repeat(cp.arange(out_h), out_w)
-    # Create matrix of index i at every levels for each channel.
-    i = level1.reshape(-1, 1) + everyLevels.reshape(1, -1)
+    i0 = cp.repeat(cp.arange(field_height), field_width)
+    i0 = cp.tile(i0, C)
+    i1 = stride * cp.repeat(cp.arange(out_height), out_width)
 
-    # ----Compute matrix of index j----
-    
-    # Slide 1 vector.
-    slide1 = cp.tile(cp.arange(WF), HF)
-    # Duplicate for the other channels.
-    slide1 = cp.tile(slide1, n_C)
-    # Create a vector with an increase by 1 at each slide.
-    everySlides = stride * cp.tile(cp.arange(out_w), out_h)
-    # Create matrix of index j at every slides for each channel.
-    j = slide1.reshape(-1, 1) + everySlides.reshape(1, -1)
+    j0 = cp.tile(cp.arange(field_width), field_height * C)
+    j1 = stride * cp.tile(cp.arange(out_width), out_height)
 
-    # ----Compute matrix of index d----
+    i = i0.reshape(-1, 1) + i1.reshape(1, -1)
+    j = j0.reshape(-1, 1) + j1.reshape(1, -1)
+    k = cp.repeat(cp.arange(C), field_height * field_width).reshape(-1, 1)
 
-    # This is to mark delimitation for each channel
-    # during multi-dimensional arrays indexing.
-    d = cp.repeat(cp.arange(n_C), HF * WF).reshape(-1, 1)
+    return (k.astype(int), i.astype(int), j.astype(int))
 
-    return i, j, d
+def im2col(x, field_height, field_width, padding=1, stride=1):
+    p = padding
+    x_padded = cp.pad(x, ((0, 0), (0, 0), (p, p), (p, p)), mode='constant')
 
-def im2col(X, HF, WF, stride, pad):
-    # Padding
-    X_padded = cp.pad(X, ((0,0), (0,0), (pad, pad), (pad, pad)), mode='constant')
-    i, j, d = get_indices(X.shape, HF, WF, stride, pad)
-    
-    # Multi-dimensional arrays indexing.
-    cols = X_padded[:, d, i, j]
-    cols = cp.concatenate(cols, axis=-1)
+    k, i, j = get_indices(x.shape, field_height, field_width, padding, stride)
+
+    cols = x_padded[:, k, i, j]
+    C = x.shape[1]
+    cols = cols.transpose(1, 2, 0).reshape(field_height * field_width * C, -1)
     return cols
 
-def col2im(dX_col, X_shape, HF, WF, stride, pad):
-    # Get input size
-    N, D, H, W = X_shape
-    # Add padding if needed.
-    H_padded, W_padded = H + 2 * pad, W + 2 * pad
-    X_padded = cp.zeros((N, D, H_padded, W_padded))
+
+def col2im(cols, x_shape, field_height=3, field_width=3, padding=1, stride=1):
+    N, C, H, W = x_shape
+
+    H_padded, W_padded = H + 2 * padding, W + 2 * padding
+    x_padded = cp.zeros((N, C, H_padded, W_padded), dtype=cols.dtype)
+
+    k, i, j = get_indices(x_shape, field_height, field_width, padding, stride)
+    cols_reshaped = cols.reshape(C * field_height * field_width, -1, N)
+    cols_reshaped = cols_reshaped.transpose(2, 0, 1)
+
+    cp.add.at(x_padded, (slice(None), k, i, j), cols_reshaped)
+    if padding == 0:
+        return x_padded
     
-    # Index matrices, necessary to transform our input image into a matrix. 
-    i, j, d = get_indices(X_shape, HF, WF, stride, pad)
-    
-    # Retrieve batch dimension by spliting dX_col N times: (X, Y) => (N, X, Y)
-    dX_col_reshaped = cp.array(cp.hsplit(dX_col, N))
-    
-    # Reshape our matrix back to image.
-    # slice(None) is used to produce the [::] effect which means "for every elements".
-    cp.add.at(X_padded, (slice(None), d, i, j), dX_col_reshaped)
-    
-    # Remove padding from new image if needed.
-    if pad == 0:
-        return X_padded
-    elif type(pad) is int:
-        return X_padded[:, :, pad:-pad, pad:-pad]
+    return x_padded[:, :, padding:-padding, padding:-padding]
