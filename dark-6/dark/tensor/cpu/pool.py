@@ -36,7 +36,7 @@ def _max_unpool2d_im(dldy, im, n):
     return out
 
 @njit(parallel=True)
-def max_pool_2d(tensor, n):
+def maxpool2d_forward(tensor, n):
     assert len(tensor.shape) == 4 #b, c, w, h
 
     sb, sc, sh, sw = tensor.shape
@@ -53,7 +53,7 @@ def max_pool_2d(tensor, n):
     return out
 
 @njit(parallel=True)
-def max_unpool_2d(dldy, tensor, n):
+def maxpool2d_backward(dldy, tensor, n):
     assert len(dldy.shape) == 4 #b, c, w, h
     assert len(tensor.shape) == 4 #b, c, w, h
 

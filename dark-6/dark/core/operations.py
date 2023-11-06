@@ -184,20 +184,21 @@ class Conv2d(Operation):
     def forward(self, x, k, **kwargs):
         self.padding = kwargs["padding"]
         self.stride = kwargs["stride"]
-        return dt.conv_forward(x, k, self.padding, self.stride)
+        return dt.conv2d_forward(x, k, self.padding, self.stride)
 
     def backward(self, dldy, y, x, k):        
-        dldx, dldk = dt.conv_backward(dldy, x, k, self.stride, self.padding)        
+        dldx, dldk = dt.conv2d_backward(dldy, x, k, self.stride, self.padding)        
         return dldx, dldk
 
 class MaxPool2d(Operation):
 
     def forward(self, x, **kwargs):
         self.kernel_size = kwargs["kernel_size"]
-        return dt.maxpool_forward(x, self.kernel_size, 0, self.kernel_size)
+        res, self.locs = dt.maxpool2d_forward(x, self.kernel_size, 0, self.kernel_size)
+        return res
 
     def backward(self, dldy, y, x):
-        dldx = dt.maxpool_backward(dldy, x, self.kernel_size, 0, self.kernel_size)
+        dldx = dt.maxpool2d_backward(dldy, x, self.locs, self.kernel_size, 0, self.kernel_size)
         return [dldx]
     
 # https://towardsdatascience.com/what-is-transposed-convolutional-layer-40e5e6e31c11
@@ -209,25 +210,26 @@ class ConvTranspose2d(Operation):
         self.stride = kwargs["stride"]
         self.output_padding = kwargs["output_padding"]
            
-        xe = self.dilate(x, self.stride)  
+        # xe = self.dilate(x, self.stride)  
 
-        _, _, kh, kw = k.shape   
-        result = dt.conv2d(xe, k.transpose(1, 0, 2, 3), kh - 1, 1)  
-        result = self.pad(result, xe.shape, k.shape, self.padding, self.output_padding)
-        return result
+        # _, _, kh, kw = k.shape   
+        # result = dt.conv2d(xe, k.transpose(1, 0, 2, 3), kh - 1, 1)  
+        # result = self.pad(result, xe.shape, k.shape, self.padding, self.output_padding)
+        # return result
 
     def backward(self, dldy, y, x, k):
         #pad gradient and convolve w.r.t k
-        dldx = dt.corr2d(dldy, k, self.padding, self.stride)
+        # dldx = dt.corr2d(dldy, k, self.padding, self.stride)
                 
-        #dilate x, convolve w.r.t dilated x and crop valid part
-        xe = self.dilate(x, self.stride)
-        dldk = dt.corr2d(dldy.transpose((1, 0, 2, 3)), xe.transpose((1, 0, 2, 3)), self.padding, 1) 
+        # #dilate x, convolve w.r.t dilated x and crop valid part
+        # xe = self.dilate(x, self.stride)
+        # dldk = dt.corr2d(dldy.transpose((1, 0, 2, 3)), xe.transpose((1, 0, 2, 3)), self.padding, 1) 
         
-        dldk = self.pad(dldk, dldy.shape, xe.shape, 0, 0)
-        dldk = dt.swapaxes(dldk, 0, 1)
+        # dldk = self.pad(dldk, dldy.shape, xe.shape, 0, 0)
+        # dldk = dt.swapaxes(dldk, 0, 1)
                 
-        return dldx, dldk
+        # return dldx, dldk
+        pass
         
     def pad(self, o, x_shape, k_shape, padding, output_padding):
         _, _, x_h, x_w = x_shape

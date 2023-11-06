@@ -26,7 +26,7 @@ def _corr2d_im(image, kernel, stride):
     return res
 
 @njit(parallel=True)
-def corr2d(tensor, kernel, padding, stride):
+def conv2d_forward(tensor, kernel, padding, stride):
     assert len(tensor.shape) == 4 #b, c, w, h
     assert len(kernel.shape) == 4 #b, c, w, h
 
