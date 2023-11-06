@@ -112,7 +112,6 @@ class JitterBrightness():
         im += brightness_factor 
         return im         
 
-
 class JitterContrast():
     def __init__(self, contrast=(-0.2, 0.2), p=0.5):
         self.contrast_range = contrast

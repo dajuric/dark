@@ -26,9 +26,6 @@ def conv2d_backward(dout, X, W, stride, padding):
     n_filter, d_filter, h_filter, w_filter = W.shape
     X_col = im2col(X, h_filter, w_filter, padding=padding, stride=stride)
 
-    db = cp.sum(dout, axis=(0, 2, 3))
-    db = db.reshape(n_filter, -1)
-
     dout_reshaped = dout.transpose(1, 2, 3, 0).reshape(n_filter, -1)
     dW = dout_reshaped @ X_col.T
     dW = dW.reshape(W.shape)
