@@ -2,6 +2,7 @@ import dark
 import dark.tensor as dt
 from dark.utils.data import DataLoader
 import dark.nn as nn
+from dark.nn.init import default_init_weights
 import dark.optim as optim
 import dark.utils.transforms as T
 import dark.utils.point_transforms as P
@@ -29,17 +30,17 @@ EPOCHS = 10
 def get_loaders():
     tr_im_transforms = T.Compose(   
         T.Resize(IM_SIZE, IM_SIZE),
-        #T.Rotate(limit=90),
-        #T.GaussianBlur(kernel_size=(3, 7), sigma_limit=(0.01, 1.5)),
-        #T.BrightnessJitter(brightness=(-0.2, 0.2)),
-        #T.ContrastJitter(contrast=(-0.2, 0.2)),
+        T.Rotate(limit=90),
+        T.GaussianBlur(kernel_size=(3, 7), sigma_limit=(0.01, 1.5)),
+        T.BrightnessJitter(brightness=(-0.2, 0.2)),
+        T.ContrastJitter(contrast=(-0.2, 0.2)),
         T.Normalize(0.5, 0.5),
         T.ToTensorV2(),
     )
     
     tr_pt_transforms = P.Compose(
         P.Resize(IM_SIZE, IM_SIZE),
-        #P.Rotate(limit=90),
+        P.Rotate(limit=90),
         P.Normalize()
     )
     
@@ -75,6 +76,7 @@ def get_net():
         net = pickle.load(open(model_path, "rb")) 
     else:
         net = Resnet18(out_dim=KEYPOINT_COUNT)
+        net.apply(default_init_weights)
 
     return net
 
@@ -83,7 +85,7 @@ def train_loop(train_loader, model, criterion, optimizer):
     train_loss = 0.0
     model.train()
 
-    for data in track(train_loader, "Training"):
+    for batchIdx, data in enumerate(track(train_loader, "Training")):
         ims, kps = data
 
         predicted_kps = model(ims)
@@ -94,11 +96,15 @@ def train_loop(train_loader, model, criterion, optimizer):
         optimizer.step()
 
         train_loss += loss.data.item()
+        
+        if batchIdx % 10 == 0:
+            loss, current = loss.data.item(), batchIdx * len(ims)
+            print(f"loss: {(loss * 100):>7f}  [{current:>5d}/{len(train_loader.dataset):>5d}]")
 
     train_loss = train_loss / len(train_loader)
     print(f"Train: loss: {(train_loss * 100):>0.2f}") 
     
-    #save_samples(train_loader.dataset, model, f"{script_dir}/samples-train.png")
+    save_samples(train_loader.dataset, model, f"{script_dir}/samples-train.png")
     return train_loss
 
 def test_loop(val_loader, model, criterion, epoch):
@@ -116,7 +122,7 @@ def test_loop(val_loader, model, criterion, epoch):
     val_loss = val_loss / len(val_loader)
     print(f"Eval: loss: {(val_loss * 100):>0.2f}") 
 
-    save_samples(val_loader.dataset, model, f"{script_dir}/samples-{epoch}.png")
+    save_samples(val_loader.dataset, model, f"{script_dir}/samples-{epoch + 1}.png")
     return val_loss
 
 
@@ -128,14 +134,14 @@ def main():
     min_test_loss = float("inf")
 
     for e in range(EPOCHS):
-        print(f"Epoch {e+1}\n-------------------------------")
+        print(f"\nEpoch {e+1}\n-------------------------------")
         train_loop(tr_loader, model, loss_fn, optimizer)
         test_loss = test_loop(te_loader, model, loss_fn, e)
 
         if test_loss < min_test_loss:
             min_test_loss = test_loss
 
-            print(f"Saving best model\n\n")
+            print(f"Saving best model")
             #pickle.dump(model, open(model_path, "wb"))
 
     print("Done!")
