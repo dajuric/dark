@@ -29,8 +29,60 @@ class KeypointDataset(Dataset):
         img = img[y:y+h, x:x+w, :]
 
         random.seed(seed)
-        kps = self.kp_transform(kps, img.shape)
+        kps, _ = self.kp_transform(kps, img.shape)
         random.seed(seed)
         img = self.im_transform(img)
 
         return img, kps.reshape(-1)
+    
+
+if __name__ == "__main__":
+    import dark.utils.transforms as T
+    import dark.utils.point_transforms as P
+    from glob import glob
+    import os
+    
+    def _draw_keypoints(im, keypoints, color):
+        imH, imW, _ = im.shape
+
+        for x, y in keypoints.reshape(-1, 2):
+            x = int(x * imW)
+            y = int(y * imH)
+
+            cv2.circle(im, (x, y), 3, color, -1)
+
+    def show_sample(dataset, index):
+        im, target = dataset[index]
+
+        im = (im * 127 + 127).astype(np.uint8)
+        im = cv2.cvtColor(np.moveaxis(im, 0, 2), cv2.COLOR_RGB2BGR)
+        im = np.ascontiguousarray(im)
+
+        _draw_keypoints(im, target, (0, 255, 0))
+        cv2.imshow("Image", im)
+        cv2.waitKey()
+
+
+    script_dir = os.path.dirname(os.path.realpath(__file__))
+    IM_SIZE = 128
+
+    tr_im_transforms = T.Compose(   
+        T.Resize(IM_SIZE, IM_SIZE),
+        T.Rotate(limit=90, p=1),
+        T.GaussianBlur(kernel_size=(3, 7), sigma_limit=(0.01, 1.5), p=1),
+        T.BrightnessJitter(brightness=(-0.2, 0.2), p=1),
+        T.ContrastJitter(contrast=(-0.5, 0.5), p=1),
+        T.Normalize(0.5, 0.5),
+        T.ToTensorV2(),
+    )
+    
+    tr_pt_transforms = P.Compose(
+        P.Resize(IM_SIZE, IM_SIZE),
+        P.Rotate(limit=90, p=1),
+        P.Normalize()
+    )
+
+    kp_files = sorted(glob(f"{script_dir}/../db/images/*.json"))
+    trSet = KeypointDataset(kp_files, tr_im_transforms, tr_pt_transforms)
+
+    show_sample(trSet, 0)

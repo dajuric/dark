@@ -1,5 +1,6 @@
 import random
 import numpy as np
+from .util import max_inscribed_rect
 
 class PointTransform():
     def __call__(self, pts, im_shape):
@@ -10,12 +11,13 @@ class Compose():
         self.transforms = transforms
 
     def __call__(self, pts, im_shape):
-        transformed_pts = pts
+        t_pts = pts
+        t_shape = im_shape[:2]
         
         for pt_t in self.transforms:
-            transformed_pts = pt_t(transformed_pts, im_shape)
+            t_pts, t_shape = pt_t(t_pts, t_shape)
 
-        return transformed_pts
+        return t_pts, t_shape
 
 
 class Resize(PointTransform):
@@ -26,11 +28,10 @@ class Resize(PointTransform):
 
     def __call__(self, pts, im_shape):
         ih, iw = im_shape[:2]
-        center = np.array([iw / 2, ih / 2])
         scale = np.array([self.w / iw, self.h / ih])
         
-        spts = (pts - center) / scale + center 
-        return spts
+        spts = pts * scale
+        return spts, (self.h, self.w)
 
 class Rotate(PointTransform):
     def __init__(self, limit, p=0.5):
@@ -39,8 +40,8 @@ class Rotate(PointTransform):
         self.limit = limit
 
     def __call__(self, pts, im_shape):
-        if random.random() < self.p:
-            return pts
+        if random.random() > self.p:
+            return pts, im_shape
 
         angle = int(2 * self.limit * random.random() - self.limit)
         h, w = im_shape[:2]
@@ -52,9 +53,16 @@ class Rotate(PointTransform):
                     [np.sin(rads), +np.cos(rads)]
                     ])
         
-        tpts = (pts - center) @ R.T + center
-        return tpts
+        # transform and translate using new centre
+        nW, nH = max_inscribed_rect(w, h, angle)  
+        tpts = (pts - center) @ R.T + np.array((nW/2, nH/2)) 
 
+        #rescale to original image size
+        s = np.array((w / nW, h / nH))
+        tpts *= s
+
+        return tpts, im_shape
+        
 class Normalize(PointTransform):
     def __init__(self):
         super().__init__()
@@ -62,6 +70,7 @@ class Normalize(PointTransform):
     def __call__(self, pts, im_shape):
         h, w = im_shape[:2]
         
-        return pts / np.array([w, h])
+        n_pts = pts / np.array([w, h])
+        return n_pts, im_shape
     
        

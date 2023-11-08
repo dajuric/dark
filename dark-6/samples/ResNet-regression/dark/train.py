@@ -2,8 +2,9 @@ import dark
 import dark.tensor as dt
 from dark.utils.data import DataLoader
 import dark.nn as nn
-from dark.utils.transforms import *
 import dark.optim as optim
+import dark.utils.transforms as T
+import dark.utils.point_transforms as P
 
 import os
 import random
@@ -14,7 +15,6 @@ import pickle
 from model import Resnet18
 from dataset import KeypointDataset
 from util import save_samples
-import point_transforms as P
 
 
 print(f"Running on: {'cuda' if dt.is_cuda() else 'cpu'}")
@@ -27,14 +27,14 @@ BATCH_SIZE = 64
 EPOCHS = 10
 
 def get_loaders():
-    tr_im_transforms = Compose(   
-        Resize(IM_SIZE, IM_SIZE),
-        Rotate(limit=90),
-        GaussianBlur(kernel_size=(3, 7), sigma_limit=(0.01, 1.5)),
-        BrightnessJitter(brightness=(-0.2, 0.2)),
-        ContrastJitter(contrast=(-0.2, 0.2)),
-        Normalize(0.5, 0.5),
-        ToTensorV2(),
+    tr_im_transforms = T.Compose(   
+        T.Resize(IM_SIZE, IM_SIZE),
+        T.Rotate(limit=90),
+        T.GaussianBlur(kernel_size=(3, 7), sigma_limit=(0.01, 1.5)),
+        T.BrightnessJitter(brightness=(-0.2, 0.2)),
+        T.ContrastJitter(contrast=(-0.2, 0.2)),
+        T.Normalize(0.5, 0.5),
+        T.ToTensorV2(),
     )
     
     tr_pt_transforms = P.Compose(
@@ -44,10 +44,10 @@ def get_loaders():
     )
     
 
-    te_im_transforms = Compose(
-        Resize(IM_SIZE, IM_SIZE),
-        Normalize(0.5, 0.5),
-        ToTensorV2(),
+    te_im_transforms = T.Compose(
+        T.Resize(IM_SIZE, IM_SIZE),
+        T.Normalize(0.5, 0.5),
+        T.ToTensorV2(),
     )
     
     te_kp_transforms = P.Compose(

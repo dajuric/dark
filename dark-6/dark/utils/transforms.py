@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import random
+from .util import max_inscribed_rect
 
 class Transform():
     def __init__(self):
@@ -37,7 +38,7 @@ class FlipHorizontal():
         self.p = p
 
     def __call__(self, im):
-        if random.random() < self.p:
+        if random.random() > self.p:
             return im
 
         flippedIm = cv2.flip(im, 1)
@@ -49,7 +50,7 @@ class FlipVertical():
         self.p = p
 
     def __call__(self, im):
-        if random.random() < self.p:
+        if random.random() > self.p:
             return im
 
         flippedIm = cv2.flip(im, 0)
@@ -62,16 +63,50 @@ class Rotate():
         self.limit = limit
 
     def __call__(self, im):
-        if random.random() < self.p:
+        if random.random() > self.p:
             return im
 
+        imH, imW = im.shape[:2]
         angle = int(2 * self.limit * random.random() - self.limit)
-        h, w, _ = im.shape
-        cX, cY = (w // 2, h // 2)
+        
+        im = self.rotate_bound(im, angle)
+        im = self.crop(im, *max_inscribed_rect(imW, imH, angle))
+        im = cv2.resize(im, (imW, imH), interpolation=cv2.INTER_AREA)
 
-        M = cv2.getRotationMatrix2D((cX, cY), angle, 1.0)
-        rotatedIm = cv2.warpAffine(im, M, (w, h))
-        return rotatedIm
+        return im
+    
+    # https://pyimagesearch.com/2017/01/02/rotate-images-correctly-with-opencv-and-python/
+    def rotate_bound(self, image, angle):
+        # grab the dimensions of the image and then determine the center
+        (h, w) = image.shape[:2]
+        (cX, cY) = (w // 2, h // 2)
+
+        # grab the rotation matrix (applying the negative of the
+        # angle to rotate clockwise), then grab the sine and cosine
+        # (i.e., the rotation components of the matrix)
+        M = cv2.getRotationMatrix2D((cX, cY), -angle, 1.0)
+        cos = np.abs(M[0, 0])
+        sin = np.abs(M[0, 1])
+
+        # compute the new bounding dimensions of the image
+        nW = int((h * sin) + (w * cos))
+        nH = int((h * cos) + (w * sin))
+
+        # adjust the rotation matrix to take into account translation
+        M[0, 2] += (nW / 2) - cX
+        M[1, 2] += (nH / 2) - cY
+
+        # perform the actual rotation and return the image
+        return cv2.warpAffine(image, M, (nW, nH))
+
+    def crop(self, img, w, h):
+        xC, yC = int(img.shape[1] * .5), int(img.shape[0] * .5)
+
+        return img[
+            int(np.ceil(yC - h * .5)) : int(np.floor(yC + h * .5)),
+            int(np.ceil(xC - w * .5)) : int(np.floor(xC + h * .5))
+        ]
+
 
 class Grayscale():
     def __init__(self):
@@ -88,7 +123,7 @@ class GaussianBlur():
         self.sigma_limit = sigma_limit
 
     def __call__(self, im):
-        if random.random() < self.p:
+        if random.random() > self.p:
             return im
         
         min_s, max_s = self.sigma_limit
@@ -103,14 +138,14 @@ class BrightnessJitter():
         self.p = p
 
     def __call__(self, im):
-        if random.random() < self.p:
+        if random.random() > self.p:
             return im
         
         min_b, max_b = self.brightness_range
         brightness_factor = random.random() * (max_b - min_b) + min_b
 
         im = im + brightness_factor * 255
-        im = im.astype(np.uint8)
+        im = im.clip(0, 255).astype(np.uint8)
         return im         
 
 class ContrastJitter():
@@ -119,16 +154,16 @@ class ContrastJitter():
         self.p = p
 
     def __call__(self, im):
-        if random.random() < self.p:
+        if random.random() > self.p:
             return im
         
         min_c, max_c = self.contrast_range
         contrast_factor = random.random() * (max_c - min_c) + min_c
-
-        mean = im.mean()
-        im = (im - mean) * contrast_factor * 255 + mean
         
-        im = im.astype(np.uint8)
+        contrast_factor += 1 
+        im = im * contrast_factor
+        
+        im = im.clip(0, 255).astype(np.uint8)
         return im
         
 
