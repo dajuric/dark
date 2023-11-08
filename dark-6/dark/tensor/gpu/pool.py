@@ -25,7 +25,7 @@ def maxpool2d_forward(X, size, stride):
     return out, max_idx
 
 def maxpool2d_backward(dout, X, X_ind, size, stride):
-    n, d, w, h = X.shape
+    n, d, h, w = X.shape
 
     dX_col = cp.zeros_like(X).reshape(size * size, -1)
     dout_col = dout.transpose(2, 3, 0, 1).ravel()

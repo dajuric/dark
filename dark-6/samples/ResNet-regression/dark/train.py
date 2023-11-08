@@ -29,17 +29,17 @@ EPOCHS = 10
 def get_loaders():
     tr_im_transforms = T.Compose(   
         T.Resize(IM_SIZE, IM_SIZE),
-        T.Rotate(limit=90),
-        T.GaussianBlur(kernel_size=(3, 7), sigma_limit=(0.01, 1.5)),
-        T.BrightnessJitter(brightness=(-0.2, 0.2)),
-        T.ContrastJitter(contrast=(-0.2, 0.2)),
+        #T.Rotate(limit=90),
+        #T.GaussianBlur(kernel_size=(3, 7), sigma_limit=(0.01, 1.5)),
+        #T.BrightnessJitter(brightness=(-0.2, 0.2)),
+        #T.ContrastJitter(contrast=(-0.2, 0.2)),
         T.Normalize(0.5, 0.5),
         T.ToTensorV2(),
     )
     
     tr_pt_transforms = P.Compose(
         P.Resize(IM_SIZE, IM_SIZE),
-        P.Rotate(limit=90),
+        #P.Rotate(limit=90),
         P.Normalize()
     )
     
@@ -98,7 +98,7 @@ def train_loop(train_loader, model, criterion, optimizer):
     train_loss = train_loss / len(train_loader)
     print(f"Train: loss: {(train_loss * 100):>0.2f}") 
     
-    save_samples(train_loader.dataset, model, f"{script_dir}/samples-train.png")
+    #save_samples(train_loader.dataset, model, f"{script_dir}/samples-train.png")
     return train_loss
 
 def test_loop(val_loader, model, criterion, epoch):
@@ -136,7 +136,7 @@ def main():
             min_test_loss = test_loss
 
             print(f"Saving best model\n\n")
-            pickle.dump(model, open(model_path, "wb"))
+            #pickle.dump(model, open(model_path, "wb"))
 
     print("Done!")
 

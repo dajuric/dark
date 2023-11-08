@@ -87,7 +87,7 @@ class Resnet18(nn.Module):
 if __name__ == "__main__":
     import dark.tensor as dt
     
-    net = Resnet18(3, 8)
-    x = dt.random.randn(1, 3, 128, 128)
+    net = Resnet18(3, 64)
+    x = dt.random.randn(1, 3, 96, 96)
     res = net(x)
     print(res.data.shape)

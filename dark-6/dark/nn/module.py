@@ -168,11 +168,11 @@ class Conv2d(Module):
         return dark.add(dark.conv2d(input, self.weights, self.stride, self.padding), self.bias)
 
 class MaxPool2d(Module):
-    def __init__(self, kernel_size = 2, stride = 2):
+    def __init__(self, kernel_size = 2, stride = -1):
         super().__init__()
 
         self.kernel_size = kernel_size
-        self.stride = stride
+        self.stride = stride if stride > 0 else kernel_size
 
     def forward(self, input):
         return dark.max_pool2d(input, self.kernel_size, self.stride)
