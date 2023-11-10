@@ -64,13 +64,11 @@ def main():
     loss_fn = YoloLoss()
     scaler = torch.cuda.amp.GradScaler()
 
-    train_loader, test_loader, train_eval_loader = get_loaders(
-        train_csv_path=config.DATASET + "/train.csv", test_csv_path=config.DATASET + "/test.csv"
-    )
+    train_loader, test_loader = get_loaders(config.DB_PATH)
 
     if config.LOAD_MODEL:
         load_checkpoint(
-            config.CHECKPOINT_FILE, model, optimizer, config.LEARNING_RATE
+            config.MODEL_PATH, model, optimizer, config.LEARNING_RATE
         )
 
     scaled_anchors = (
@@ -79,11 +77,11 @@ def main():
     ).to(config.DEVICE)
 
     for epoch in range(config.NUM_EPOCHS):
-        #plot_couple_examples(model, test_loader, 0.6, 0.5, scaled_anchors)
+        plot_couple_examples(model, test_loader, 0.3, 0.5, scaled_anchors)
         train_fn(train_loader, model, optimizer, loss_fn, scaler, scaled_anchors)
 
-        #if config.SAVE_MODEL:
-        #    save_checkpoint(model, optimizer, filename=f"checkpoint.pth.tar")
+        if config.SAVE_MODEL:
+            save_checkpoint(model, optimizer, filename=config.MODEL_PATH)
 
         #print(f"Currently epoch {epoch}")
         #print("On Train Eval loader:")

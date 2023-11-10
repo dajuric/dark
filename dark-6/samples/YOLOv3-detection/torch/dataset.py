@@ -5,8 +5,8 @@ Creates a Pytorch dataset to load the Pascal VOC & MS COCO datasets
 import config
 import numpy as np
 import os
-import pandas as pd
 import torch
+import glob
 
 from PIL import Image, ImageFile
 from torch.utils.data import Dataset, DataLoader
@@ -22,18 +22,15 @@ ImageFile.LOAD_TRUNCATED_IMAGES = True
 class YOLODataset(Dataset):
     def __init__(
         self,
-        csv_file,
         img_dir,
-        label_dir,
         anchors,
         image_size=416,
         S=[13, 26, 52],
         C=20,
         transform=None,
     ):
-        self.annotations = pd.read_csv(csv_file)
+        self.lblFiles = sorted(glob.glob(f"{img_dir}/**/*.txt", recursive=True))
         self.img_dir = img_dir
-        self.label_dir = label_dir
         self.image_size = image_size
         self.transform = transform
         self.S = S
@@ -44,13 +41,14 @@ class YOLODataset(Dataset):
         self.ignore_iou_thresh = 0.5
 
     def __len__(self):
-        return len(self.annotations)
+        return len(self.lblFiles)
 
     def __getitem__(self, index):
-        label_path = os.path.join(self.label_dir, self.annotations.iloc[index, 1])
-        bboxes = np.roll(np.loadtxt(fname=label_path, delimiter=" ", ndmin=2), 4, axis=1).tolist()
-        img_path = os.path.join(self.img_dir, self.annotations.iloc[index, 0])
-        image = np.array(Image.open(img_path).convert("RGB"))
+        lblFile = self.lblFiles[index]
+        imFile  = lblFile.replace(".txt", ".jpg")
+
+        image = np.array(Image.open(imFile).convert("RGB"))
+        bboxes = self._read_boxes(lblFile)
 
         if self.transform:
             augmentations = self.transform(image=image, bboxes=bboxes)
@@ -88,17 +86,21 @@ class YOLODataset(Dataset):
                     targets[scale_idx][anchor_on_scale, i, j, 0] = -1  # ignore prediction
 
         return image, tuple(targets)
+    
+    def _read_boxes(self, lblFile):
+        boxes = np.loadtxt(lblFile, delimiter=" ", ndmin=2, dtype=np.float64)
+        boxes = np.roll(boxes, -1)
+        boxes = boxes.tolist()
+
+        return boxes
 
 
 def test():
     anchors = config.ANCHORS
-
     transform = config.test_transforms
 
     dataset = YOLODataset(
-        "COCO/train.csv",
-        "COCO/images/images/",
-        "COCO/labels/labels_new/",
+        f"{config.DB_PATH}/val/",
         S=[13, 26, 52],
         anchors=anchors,
         transform=transform,

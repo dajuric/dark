@@ -235,7 +235,7 @@ def mean_average_precision(
 def plot_image(image, boxes):
     """Plots predicted bounding boxes on the image"""
     cmap = plt.get_cmap("tab20b")
-    class_labels = config.COCO_LABELS if config.DATASET=='COCO' else config.PASCAL_CLASSES
+    class_labels = ["face"]
     colors = [cmap(i) for i in np.linspace(0, 1, len(class_labels))]
     im = np.array(image)
     height, width, _ = im.shape
@@ -442,26 +442,25 @@ def load_checkpoint(checkpoint_file, model, optimizer, lr):
         param_group["lr"] = lr
 
 
-def get_loaders(train_csv_path, test_csv_path):
+def get_loaders(db_dir):
     from dataset import YOLODataset
 
     IMAGE_SIZE = config.IMAGE_SIZE
+
     train_dataset = YOLODataset(
-        train_csv_path,
+        f"{db_dir}/train/",
         transform=config.train_transforms,
         S=[IMAGE_SIZE // 32, IMAGE_SIZE // 16, IMAGE_SIZE // 8],
-        img_dir=config.IMG_DIR,
-        label_dir=config.LABEL_DIR,
         anchors=config.ANCHORS,
     )
     test_dataset = YOLODataset(
-        test_csv_path,
+        f"{db_dir}/val/",
         transform=config.test_transforms,
         S=[IMAGE_SIZE // 32, IMAGE_SIZE // 16, IMAGE_SIZE // 8],
-        img_dir=config.IMG_DIR,
-        label_dir=config.LABEL_DIR,
         anchors=config.ANCHORS,
     )
+
+
     train_loader = DataLoader(
         dataset=train_dataset,
         batch_size=config.BATCH_SIZE,
@@ -479,24 +478,7 @@ def get_loaders(train_csv_path, test_csv_path):
         drop_last=False,
     )
 
-    train_eval_dataset = YOLODataset(
-        train_csv_path,
-        transform=config.test_transforms,
-        S=[IMAGE_SIZE // 32, IMAGE_SIZE // 16, IMAGE_SIZE // 8],
-        img_dir=config.IMG_DIR,
-        label_dir=config.LABEL_DIR,
-        anchors=config.ANCHORS,
-    )
-    train_eval_loader = DataLoader(
-        dataset=train_eval_dataset,
-        batch_size=config.BATCH_SIZE,
-        num_workers=config.NUM_WORKERS,
-        pin_memory=config.PIN_MEMORY,
-        shuffle=False,
-        drop_last=False,
-    )
-
-    return train_loader, test_loader, train_eval_loader
+    return train_loader, test_loader
 
 def plot_couple_examples(model, loader, thresh, iou_thresh, anchors):
     model.eval()
@@ -516,11 +498,11 @@ def plot_couple_examples(model, loader, thresh, iou_thresh, anchors):
 
         model.train()
 
-    for i in range(batch_size):
+    for i in range(min(batch_size, 4)):
         nms_boxes = non_max_suppression(
             bboxes[i], iou_threshold=iou_thresh, threshold=thresh, box_format="midpoint",
         )
-        plot_image(x[i].permute(1,2,0).detach().cpu(), nms_boxes)
+        plot_image(x[i].permute(1,2,0).detach().cpu(), nms_boxes)     
 
 
 
