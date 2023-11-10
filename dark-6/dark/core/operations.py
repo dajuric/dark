@@ -264,8 +264,22 @@ class Cat(Operation):
         indices = [int(x) for x in indices]
 
         result = dt.split(dldy, indices[:-1], axis=self.dim)
-        return result   
+        return result  
 
+class Slice(Operation):
+
+    def forward(self, input, **kwargs):
+        self.dims = kwargs["dim"]
+        out = input[self.dims]
+
+        return out
+    
+    def backward(self, grad, out, input):
+        dldy = dt.zeros(input.shape)
+        dldy[self.dims] = grad
+
+        return [dldy]
+        
 class Dropout(Operation):
     
     def forward(self, x, p):

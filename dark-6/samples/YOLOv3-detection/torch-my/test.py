@@ -1,5 +1,5 @@
 from config import *
-from model import YOLONano
+from model_tiny import YOLONano as YOLOv3
 from utils import *
 import torch
 import cv2
@@ -26,7 +26,7 @@ def predict(model, im):
     return bboxes
     
 def main():
-    im_files = sorted(glob(f"{DB_PATH}/val/**/*.jpg", recursive=True))
+    im_files = sorted(glob(f"{DB_PATH}/train/**/*.jpg", recursive=True))
     im_file = random.choice(im_files)
     
     im = cv2.imread(im_file)  

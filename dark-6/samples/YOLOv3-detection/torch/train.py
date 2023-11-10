@@ -1,83 +1,114 @@
-from torch.optim import *
-from torch.optim.lr_scheduler import *
-from config import *
-from dataset import *
-from model import YOLONano
-from loss import *
-from utils import *
-from dataset import *
-from rich.progress import track
-import os
+"""
+Main file for training Yolo model on Pascal VOC and COCO dataset
+"""
 
-sAnchors = get_scaled_anchors().to(device)
+import config
+import torch
+import torch.optim as optim
 
-def train_loop(dLoader: DataLoader, model: YOLONano, loss_fn: YoloLoss, optimizer: Optimizer):
-    model.train()
+from model import YOLOv3
+from tqdm import tqdm
+from utils import (
+    mean_average_precision,
+    cells_to_bboxes,
+    get_evaluation_bboxes,
+    save_checkpoint,
+    load_checkpoint,
+    check_class_accuracy,
+    get_loaders,
+    plot_couple_examples
+)
+from loss import YoloLoss
+import warnings
+warnings.filterwarnings("ignore")
+
+torch.backends.cudnn.benchmark = True
+
+
+def train_fn(train_loader, model, optimizer, loss_fn, scaler, scaled_anchors):
+    loop = tqdm(train_loader, leave=True)
     losses = []
-
-    for X, y in track(dLoader, "Train..."):
-        X, y0, y1, y2 = X.to(device), y[0].to(device), y[1].to(device), y[2].to(device)
-        pred = model(X)
-
-        loss = (
-            loss_fn(pred[0], y0, sAnchors[0]) +
-            loss_fn(pred[1], y1, sAnchors[1]) +
-            loss_fn(pred[2], y2, sAnchors[2])
-        )        
-        losses.append(loss.item())
-
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-
-    mean_loss = sum(losses) / len(losses)
-    print(f"Mean train loss: {mean_loss}")
-
-@torch.no_grad()
-def test_loop(dLoader: DataLoader, model: YOLONano, loss_fn: YoloLoss):
-    model.eval()
-    losses = []
-
-    for X, y in track(dLoader, "Eval... "):
-        X, y0, y1, y2 = X.to(device), y[0].to(device), y[1].to(device), y[2].to(device)
-        pred = model(X)
-
-        loss = (
-            loss_fn(pred[0], y0, sAnchors[0]) +
-            loss_fn(pred[1], y1, sAnchors[1]) +
-            loss_fn(pred[2], y2, sAnchors[2])
+    for batch_idx, (x, y) in enumerate(loop):
+        x = x.to(config.DEVICE)
+        y0, y1, y2 = (
+            y[0].to(config.DEVICE),
+            y[1].to(config.DEVICE),
+            y[2].to(config.DEVICE),
         )
-        losses.append(loss.item())
 
-    mean_loss = sum(losses) / len(losses)
-    print(f"Mean test loss: {mean_loss}")
-    return mean_loss
+        with torch.cuda.amp.autocast():
+            out = model(x)
+            loss = (
+                loss_fn(out[0], y0, scaled_anchors[0])
+                + loss_fn(out[1], y1, scaled_anchors[1])
+                + loss_fn(out[2], y2, scaled_anchors[2])
+            )
+
+        losses.append(loss.item())
+        optimizer.zero_grad()
+        scaler.scale(loss).backward()
+        scaler.step(optimizer)
+        scaler.update()
+
+        # update progress bar
+        mean_loss = sum(losses) / len(losses)
+        loop.set_postfix(loss=mean_loss)
+
+
 
 def main():
-    model = YOLONano().to(device)
-    if os.path.exists(MODEL_PATH): model = torch.load(MODEL_PATH, map_location=device)
-
+    model = YOLOv3(num_classes=config.NUM_CLASSES).to(config.DEVICE)
+    optimizer = optim.Adam(
+        model.parameters(), lr=config.LEARNING_RATE, weight_decay=config.WEIGHT_DECAY
+    )
     loss_fn = YoloLoss()
-    trLoader, teLoader = get_dataloaders()
+    scaler = torch.cuda.amp.GradScaler()
 
-    optimizer = Adam(model.parameters())  #optimizer = Adam(model.parameters(), lr=LEARNING_RATE, weight_decay=WEIGHT_DECAY)
-    scheduler = ReduceLROnPlateau(optimizer, 'min', verbose=True)
+    train_loader, test_loader, train_eval_loader = get_loaders(
+        train_csv_path=config.DATASET + "/train.csv", test_csv_path=config.DATASET + "/test.csv"
+    )
 
-    min_test_loss = float("inf")
-    for epoch in range(NUM_EPOCHS):
-        print(f"\n-----Epoch: {epoch}-----")
-        train_loop(trLoader, model, loss_fn, optimizer)
-        test_loss = test_loop(teLoader, model, loss_fn)
-        scheduler.step(test_loss)
+    if config.LOAD_MODEL:
+        load_checkpoint(
+            config.CHECKPOINT_FILE, model, optimizer, config.LEARNING_RATE
+        )
 
-        if test_loss < min_test_loss:
-            torch.save(model, MODEL_PATH)
-            min_test_loss = test_loss
+    scaled_anchors = (
+        torch.tensor(config.ANCHORS)
+        * torch.tensor(config.S).unsqueeze(1).unsqueeze(1).repeat(1, 3, 2)
+    ).to(config.DEVICE)
+
+    for epoch in range(config.NUM_EPOCHS):
+        #plot_couple_examples(model, test_loader, 0.6, 0.5, scaled_anchors)
+        train_fn(train_loader, model, optimizer, loss_fn, scaler, scaled_anchors)
+
+        #if config.SAVE_MODEL:
+        #    save_checkpoint(model, optimizer, filename=f"checkpoint.pth.tar")
+
+        #print(f"Currently epoch {epoch}")
+        #print("On Train Eval loader:")
+        #print("On Train loader:")
+        #check_class_accuracy(model, train_loader, threshold=config.CONF_THRESHOLD)
+
+        if epoch > 0 and epoch % 3 == 0:
+            check_class_accuracy(model, test_loader, threshold=config.CONF_THRESHOLD)
+            pred_boxes, true_boxes = get_evaluation_bboxes(
+                test_loader,
+                model,
+                iou_threshold=config.NMS_IOU_THRESH,
+                anchors=config.ANCHORS,
+                threshold=config.CONF_THRESHOLD,
+            )
+            mapval = mean_average_precision(
+                pred_boxes,
+                true_boxes,
+                iou_threshold=config.MAP_IOU_THRESH,
+                box_format="midpoint",
+                num_classes=config.NUM_CLASSES,
+            )
+            print(f"MAP: {mapval.item()}")
+            model.train()
 
 
 if __name__ == "__main__":
-    os.environ["PYDEVD_DISABLE_FILE_VALIDATION"] = "1"
     main()
-
-
-

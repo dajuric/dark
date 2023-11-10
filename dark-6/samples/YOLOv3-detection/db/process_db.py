@@ -31,13 +31,11 @@ def read_file(txt_file):
         
 def write_data(im_boxes, im_base_folder):
     for im_file, boxes in track(im_boxes.items()):
-        imH, imW, _ = cv2.imread(os.path.join(im_base_folder, im_file)).shape
-        
-        im_folder = os.path.join(im_base_folder, os.path.dirname(im_file))
-        bb_file   = os.path.basename(im_file).replace(".jpg", ".txt")
-             
+
         #convert to yolo boxes
+        imH, imW, _ = cv2.imread(os.path.join(im_base_folder, im_file)).shape
         yolo_boxes = []
+        
         for box in boxes:
             x, y, w, h = box
             if w == 0 or h == 0:
@@ -51,13 +49,16 @@ def write_data(im_boxes, im_base_folder):
 
         
         #write to file
+        im_folder = os.path.join(im_base_folder, os.path.dirname(im_file))
+        bb_file   = os.path.basename(im_file).replace(".jpg", ".txt")
+
         if len(yolo_boxes) == 0:
             continue
         
         f_bb = open(os.path.join(im_folder, bb_file), "w+")
         
         for box in yolo_boxes:
-            row = "0 " + " ".join([str(x) for x in [xC, yC, w, h]])
+            row = "0 " + " ".join([str(x) for x in box])
             f_bb.write(row + "\n")
         
         f_bb.close() 

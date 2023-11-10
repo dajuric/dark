@@ -1,4 +1,4 @@
-from dark.utils.data import Dataset
+from torch.utils.data import Dataset
 import pickle
 import numpy as np
 import random
