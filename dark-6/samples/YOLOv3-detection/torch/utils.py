@@ -232,10 +232,10 @@ def mean_average_precision(
     return sum(average_precisions) / len(average_precisions)
 
 
-def plot_image(image, boxes):
+def plot_image(image, boxes, i):
     """Plots predicted bounding boxes on the image"""
     cmap = plt.get_cmap("tab20b")
-    class_labels = ["face"]
+    class_labels = config.PASCAL_CLASSES
     colors = [cmap(i) for i in np.linspace(0, 1, len(class_labels))]
     im = np.array(image)
     height, width, _ = im.shape
@@ -274,7 +274,7 @@ def plot_image(image, boxes):
             bbox={"color": colors[int(class_pred)], "pad": 0},
         )
 
-    plt.show()
+    plt.savefig(f"img-{i}.png")
 
 
 def get_evaluation_bboxes(
@@ -502,7 +502,7 @@ def plot_couple_examples(model, loader, thresh, iou_thresh, anchors):
         nms_boxes = non_max_suppression(
             bboxes[i], iou_threshold=iou_thresh, threshold=thresh, box_format="midpoint",
         )
-        plot_image(x[i].permute(1,2,0).detach().cpu(), nms_boxes)     
+        plot_image(x[i].permute(1,2,0).detach().cpu(), nms_boxes, i)     
 
 
 
