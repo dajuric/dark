@@ -57,7 +57,11 @@ class YoloDataset(Dataset):
         anchor_taken = targets[aIdx, r, c, 0]
         if anchor_taken: 
             return
-
+        
+        # if iou_anchors[aIdx] < 0.5:
+        #     targets[aIdx, r, c, 0] = -1
+        #     return
+        
         x_cell, y_cell = s * x - c, s * y - r
         w_cell, h_cell = s * w,     s * h
         box_coords = [x_cell, y_cell, w_cell, h_cell]
@@ -77,10 +81,10 @@ class YoloDataset(Dataset):
         return np.array(ious)
     
 def get_dataloaders():
-    dbTrain = YoloDataset(f"{DB_PATH}/train/", train_transforms)
-    dbTest  = YoloDataset(f"{DB_PATH}/val/",   test_transforms) 
+    dbTrain = YoloDataset(f"{DB_PATH}/", train_transforms)
+    dbTest  = YoloDataset(f"{DB_PATH}/", test_transforms) 
 
-    workers = 16
+    workers = 1
     trainLoader = DataLoader(dbTrain, BATCH_SIZE, shuffle=True,  num_workers=workers)
     testLoader  = DataLoader(dbTest,  BATCH_SIZE, shuffle=False, num_workers=workers)
 
@@ -89,7 +93,7 @@ def get_dataloaders():
 
 
 if __name__ == "__main__":
-    dataset = YoloDataset(f"{DB_PATH}/val/", test_transforms)
+    dataset = YoloDataset(f"{DB_PATH}/", test_transforms)
 
     im, target = dataset[15]
     boxes = []

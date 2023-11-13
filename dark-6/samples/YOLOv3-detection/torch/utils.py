@@ -487,7 +487,7 @@ def plot_couple_examples(model, loader, thresh, iou_thresh, anchors):
     with torch.no_grad():
         out = model(x)
         bboxes = [[] for _ in range(x.shape[0])]
-        for i in range(3):
+        for i in range(2):
             batch_size, A, S, _, _ = out[i].shape
             anchor = anchors[i]
             boxes_scale_i = cells_to_bboxes(

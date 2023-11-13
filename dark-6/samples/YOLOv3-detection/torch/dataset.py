@@ -34,9 +34,9 @@ class YOLODataset(Dataset):
         self.image_size = image_size
         self.transform = transform
         self.S = S
-        self.anchors = torch.tensor(anchors[0] + anchors[1] + anchors[2])  # for all 3 scales
-        self.num_anchors = self.anchors.shape[0]
-        self.num_anchors_per_scale = self.num_anchors // 3
+        self.anchors = torch.tensor(anchors[0] + anchors[1])  # for all 3 scales
+        self.num_anchors = 2 * 3
+        self.num_anchors_per_scale = 3
         self.C = C
         self.ignore_iou_thresh = 0.5
 
@@ -56,12 +56,12 @@ class YOLODataset(Dataset):
             bboxes = augmentations["bboxes"]
 
         # Below assumes 3 scale predictions (as paper) and same num of anchors per scale
-        targets = [torch.zeros((self.num_anchors // 3, S, S, 6)) for S in self.S]
+        targets = [torch.zeros((self.num_anchors // 2, S, S, 6)) for S in self.S]
         for box in bboxes:
             iou_anchors = iou(torch.tensor(box[2:4]), self.anchors)
             anchor_indices = iou_anchors.argsort(descending=True, dim=0)
             x, y, width, height, class_label = box
-            has_anchor = [False] * 3  # each scale should have one anchor
+            has_anchor = [False] * 2  # each scale should have one anchor
             for anchor_idx in anchor_indices:
                 scale_idx = anchor_idx // self.num_anchors_per_scale
                 anchor_on_scale = anchor_idx % self.num_anchors_per_scale
@@ -101,11 +101,11 @@ def test():
 
     dataset = YOLODataset(
         f"{config.DB_PATH}/",
-        S=[13, 26, 52],
+        S=[13, 26],
         anchors=anchors,
         transform=transform,
     )
-    S = [13, 26, 52]
+    S = [13, 26]
     scaled_anchors = torch.tensor(anchors) / (
         1 / torch.tensor(S).unsqueeze(1).unsqueeze(1).repeat(1, 3, 2)
     )
@@ -113,7 +113,7 @@ def test():
     for x, y in loader:
         boxes = []
 
-        for i in range(y[0].shape[1]):
+        for i in range(len(y)):
             anchor = scaled_anchors[i]
             print(anchor.shape)
             print(y[i].shape)
@@ -122,7 +122,7 @@ def test():
             )[0]
         boxes = nms(boxes, iou_threshold=1, threshold=0.7, box_format="midpoint")
         print(boxes)
-        plot_image(x[0].permute(1, 2, 0).to("cpu"), boxes)
+        plot_image(x[0].permute(1, 2, 0).to("cpu"), boxes, 0)
 
 
 if __name__ == "__main__":

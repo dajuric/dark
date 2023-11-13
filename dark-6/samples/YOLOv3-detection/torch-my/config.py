@@ -6,27 +6,26 @@ import os
 
 script_dir = os.path.dirname(os.path.realpath(__file__))
 
-DB_PATH = f"{script_dir}/../db/"
+DB_PATH = f"{script_dir}/../db/TCDCN/"
 MODEL_PATH = f"{script_dir}/model.pt"
 C = 1
 TEST_SIZE = 0.1
 
-IM_SIZE = 320
+IM_SIZE = 128
 
 ANCHORS = [
     [(0.28, 0.22), (0.38, 0.48), (0.9, 0.78)],
-    [(0.07, 0.15), (0.15, 0.11), (0.14, 0.29)],
-    [(0.02, 0.03), (0.04, 0.07), (0.08, 0.06)],
+    [(0.07, 0.15), (0.15, 0.11), (0.14, 0.29)]
 ] 
 NUM_ANCHORS = 3
 for sa in ANCHORS: assert NUM_ANCHORS == len(sa)
 
-S = [IM_SIZE // 32, IM_SIZE // 16, IM_SIZE // 8]
+S = [IM_SIZE // 32, IM_SIZE // 16]
 
-BATCH_SIZE = 32
-LEARNING_RATE = 1e-5
-WEIGHT_DECAY = 1e-4
-NUM_EPOCHS = 10
+BATCH_SIZE = 64
+LEARNING_RATE = 1e-3
+WEIGHT_DECAY = 1e-2
+NUM_EPOCHS = 50
 
 torch.manual_seed(0)
 device = "cuda" if torch.cuda.is_available() else "cpu"

@@ -1,5 +1,5 @@
 from config import *
-from model_tiny import YOLONano as YOLOv3
+from model import BlazeFace as YoloNet
 from utils import *
 import torch
 import cv2
@@ -19,8 +19,7 @@ def predict(model, im):
 
     bboxes = [
                 *cell_to_boxes(pred[0], S[0], sAnchors=sAnchors[0]),
-                *cell_to_boxes(pred[1], S[1], sAnchors=sAnchors[1]),
-                *cell_to_boxes(pred[2], S[2], sAnchors=sAnchors[2])
+                *cell_to_boxes(pred[1], S[1], sAnchors=sAnchors[1])
              ]
 
     return bboxes

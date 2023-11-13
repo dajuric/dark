@@ -1,4 +1,5 @@
 import torch
+import numpy as np
 import cv2
 from config import *
 
@@ -89,6 +90,27 @@ def plot_boxes(im, boxes):
 
         color = colors[int(lbl)].numpy().tolist()
         cv2.rectangle(im, (x, y), (x + w, y + h), color, 3)
+
+def save_detection_samples(model, dataset, sAnchors, indices = [0, 1, 2, 3, 4]):
+
+    for i in indices:
+        im, _ = dataset[i]
+        im = im.to(device)
+
+        pred = model(im)
+        pred = [x.cpu() for x in pred]
+
+        bboxes = [
+                *cell_to_boxes(pred[0], S[0], sAnchors=sAnchors[0]),
+                *cell_to_boxes(pred[1], S[1], sAnchors=sAnchors[1])
+             ]
+        
+        im = np.rollaxis(im.cpu().numpy().squeeze(), 3, 0)
+        im = ((im + 0) * 255).astype(np.uint8)
+        
+        plot_boxes(im, bboxes)
+        cv2.imwrite(f"{script_dir}/out-{i}.png", im)
+
 
 if __name__ == "__main__":
     sa = get_scaled_anchors()

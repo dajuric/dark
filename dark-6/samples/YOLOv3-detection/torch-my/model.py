@@ -1,166 +1,183 @@
-import config
-import os
 import torch
 import torch.nn as nn
-import numpy as np
-import matplotlib.patches as patches
-import matplotlib.pyplot as plt
+import torch.nn.functional as F
+from config import *
 
+# https://github.com/deepcam-cn/yolov5-face/blob/master/models/common.py
 
-""" 
-Information about architecture config:
-Tuple is structured by (filters, kernel_size, stride) 
-Every conv is a same convolution. 
-List is structured by "B" indicating a residual block followed by the number of repeats
-"S" is for scale prediction block and computing the yolo loss
-"U" is for upsampling the feature map and concatenating with a previous layer
-"""
-config = [
-    (32, 3, 1),
-    (64, 3, 2),
-    ["B", 1],
-    (128, 3, 2),
-    ["B", 2],
-    (256, 3, 2),
-    ["B", 8],
-    (512, 3, 2),
-    ["B", 8],
-    (1024, 3, 2),
-    ["B", 4],  # To this point is Darknet-53
-    (512, 1, 1),
-    (1024, 3, 1),
-    "S",
-    (256, 1, 1),
-    "U",
-    (256, 1, 1),
-    (512, 3, 1),
-    "S",
-    (128, 1, 1),
-    "U",
-    (128, 1, 1),
-    (256, 3, 1),
-    "S",
-]
+def autopad(k, p=None):  # kernel, padding
+    # Pad to 'same'
+    if p is None:
+        p = k // 2 if isinstance(k, int) else [x // 2 for x in k]  # auto-pad
+    return p
 
-
-class CNNBlock(nn.Module):
-    def __init__(self, in_channels, out_channels, bn_act=True, **kwargs):
-        super().__init__()
-        self.conv = nn.Conv2d(in_channels, out_channels, bias=not bn_act, **kwargs)
-        self.bn = nn.BatchNorm2d(out_channels)
-        self.leaky = nn.LeakyReLU(0.1)
-        self.use_bn_act = bn_act
+class Conv(nn.Module):
+    # Standard convolution
+    def __init__(self, c1, c2, k=1, s=1, p=None, g=1, act=True):  # ch_in, ch_out, kernel, stride, padding, groups
+        super(Conv, self).__init__()
+        self.conv = nn.Conv2d(c1, c2, k, s, autopad(k, p), groups=g)
+        self.bn = nn.BatchNorm2d(c2)
+        self.act = nn.SiLU() if act is True else (act if isinstance(act, nn.Module) else nn.Identity())
+        #self.act = self.act = nn.LeakyReLU(0.1, inplace=True) if act is True else (act if isinstance(act, nn.Module) else nn.Identity())
 
     def forward(self, x):
-        if self.use_bn_act:
-            return self.leaky(self.bn(self.conv(x)))
+        return self.act(self.bn(self.conv(x)))
+
+class BlazeBlock(nn.Module):
+    def __init__(self, in_channels,out_channels,mid_channels=None,stride=1):
+        super(BlazeBlock, self).__init__()
+        mid_channels = mid_channels or in_channels
+        assert stride in [1, 2]
+        if stride>1:
+            self.use_pool = True
         else:
-            return self.conv(x)
+            self.use_pool = False
 
+        self.branch1 = nn.Sequential(
+            nn.Conv2d(in_channels=in_channels,out_channels=mid_channels,kernel_size=5,stride=stride,padding=2,groups=in_channels),
+            nn.BatchNorm2d(mid_channels),
 
-class ResidualBlock(nn.Module):
-    def __init__(self, channels, use_residual=True, num_repeats=1):
-        super().__init__()
-        self.layers = nn.ModuleList()
-        for repeat in range(num_repeats):
-            self.layers += [
-                nn.Sequential(
-                    CNNBlock(channels, channels // 2, kernel_size=1),
-                    CNNBlock(channels // 2, channels, kernel_size=3, padding=1),
-                )
-            ]
-
-        self.use_residual = use_residual
-        self.num_repeats = num_repeats
-
-    def forward(self, x):
-        for layer in self.layers:
-            if self.use_residual:
-                x = x + layer(x)
-            else:
-                x = layer(x)
-
-        return x
-
-
-class ScalePrediction(nn.Module):
-    def __init__(self, in_channels, num_classes):
-        super().__init__()
-        self.pred = nn.Sequential(
-            CNNBlock(in_channels, 2 * in_channels, kernel_size=3, padding=1),
-            CNNBlock(
-                2 * in_channels, (num_classes + 5) * 3, bn_act=False, kernel_size=1
-            ),
-        )
-        self.num_classes = num_classes
-
-    def forward(self, x):
-        return (
-            self.pred(x)
-            .reshape(x.shape[0], 3, self.num_classes + 5, x.shape[2], x.shape[3])
-            .permute(0, 1, 3, 4, 2)
+            nn.Conv2d(in_channels=mid_channels,out_channels=out_channels,kernel_size=1,stride=1),
+            nn.BatchNorm2d(out_channels),
         )
 
+        if self.use_pool:
+            self.shortcut = nn.Sequential(
+                nn.MaxPool2d(kernel_size=stride, stride=stride),
+                nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=1, stride=1),
+                nn.BatchNorm2d(out_channels),
+            )
 
-class YOLOv3(nn.Module):
-    def __init__(self, in_channels=3, num_classes=80):
-        super().__init__()
-        self.num_classes = num_classes
-        self.in_channels = in_channels
-        self.layers = self._create_conv_layers()
+        self.relu = nn.SiLU(inplace=True)
 
     def forward(self, x):
-        outputs = []  # for each scale
-        route_connections = []
-        for layer in self.layers:
-            if isinstance(layer, ScalePrediction):
-                outputs.append(layer(x))
-                continue
+        branch1 = self.branch1(x)
+        out = (branch1+self.shortcut(x)) if self.use_pool else (branch1+x)
+        return self.relu(out)    
+  
+class DoubleBlazeBlock(nn.Module):
+    def __init__(self,in_channels,out_channels,mid_channels=None,stride=1):
+        super(DoubleBlazeBlock, self).__init__()
+        mid_channels = mid_channels or in_channels
+        assert stride in [1, 2]
+        if stride > 1:
+            self.use_pool = True
+        else:
+            self.use_pool = False
 
-            x = layer(x)
+        self.branch1 = nn.Sequential(
+            nn.Conv2d(in_channels=in_channels, out_channels=in_channels, kernel_size=5, stride=stride,padding=2,groups=in_channels),
+            nn.BatchNorm2d(in_channels),
 
-            if isinstance(layer, ResidualBlock) and layer.num_repeats == 8:
-                route_connections.append(x)
+            nn.Conv2d(in_channels=in_channels, out_channels=mid_channels, kernel_size=1, stride=1),
+            nn.BatchNorm2d(mid_channels),
+            nn.SiLU(),
 
-            elif isinstance(layer, nn.Upsample):
-                x = torch.cat([x, route_connections[-1]], dim=1)
-                route_connections.pop()
+            nn.Conv2d(in_channels=mid_channels, out_channels=mid_channels, kernel_size=5, stride=1,padding=2),
+            nn.BatchNorm2d(mid_channels),
 
-        return outputs
+            nn.Conv2d(in_channels=mid_channels, out_channels=out_channels, kernel_size=1, stride=1),
+            nn.BatchNorm2d(out_channels),
+        )
 
-    def _create_conv_layers(self):
-        layers = nn.ModuleList()
-        in_channels = self.in_channels
+        if self.use_pool:
+            self.shortcut = nn.Sequential(
+                nn.MaxPool2d(kernel_size=stride, stride=stride),
+                nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=1, stride=1),
+                nn.BatchNorm2d(out_channels),
+            )
 
-        for module in config:
-            if isinstance(module, tuple):
-                out_channels, kernel_size, stride = module
-                layers.append(
-                    CNNBlock(
-                        in_channels,
-                        out_channels,
-                        kernel_size=kernel_size,
-                        stride=stride,
-                        padding=1 if kernel_size == 3 else 0,
-                    )
-                )
-                in_channels = out_channels
+        self.relu = nn.SiLU(inplace=True)
 
-            elif isinstance(module, list):
-                num_repeats = module[1]
-                layers.append(ResidualBlock(in_channels, num_repeats=num_repeats,))
+    def forward(self, x):
+        branch1 = self.branch1(x)
+        out = (branch1 + self.shortcut(x)) if self.use_pool else (branch1 + x)
+        return self.relu(out)
+    
 
-            elif isinstance(module, str):
-                if module == "S":
-                    layers += [
-                        ResidualBlock(in_channels, use_residual=False, num_repeats=1),
-                        CNNBlock(in_channels, in_channels // 2, kernel_size=1),
-                        ScalePrediction(in_channels // 2, num_classes=self.num_classes),
-                    ]
-                    in_channels = in_channels // 2
+class Concat(nn.Module):
+    def __init__(self, dimension=1):
+        super(Concat, self).__init__()
+        self.d = dimension
 
-                elif module == "U":
-                    layers.append(nn.Upsample(scale_factor=2),)
-                    in_channels = in_channels * 3
+    def forward(self, x):
+        return torch.cat(x, self.d)
 
-        return layers
+class BlazeFace(nn.Module):
+    
+    def __init__(self, channels=24):
+        super(BlazeFace, self).__init__()
+  
+        self.backboneA = nn.Sequential(
+            Conv(3, channels, k=3, s=2, p=1),
+            
+            BlazeBlock(channels, channels, channels),
+            BlazeBlock(channels, channels, channels),
+            
+            BlazeBlock(channels, channels*2, channels*2, stride=2), # pix=32
+            BlazeBlock(channels*2, channels*2, channels*2),
+            BlazeBlock(channels*2, channels*2, channels*2),
+            
+            DoubleBlazeBlock(channels*2, channels*4, channels, stride=2), # pix=16
+            DoubleBlazeBlock(channels*4, channels*4, channels),
+            DoubleBlazeBlock(channels*4, channels*4, channels),
+            
+            DoubleBlazeBlock(channels*4, channels*4, channels, stride=2), #pix=8
+            DoubleBlazeBlock(channels*4, channels*4, channels),
+            DoubleBlazeBlock(channels*4, channels*4, channels),
+        )
+
+        self.backboneB = nn.Sequential(
+            DoubleBlazeBlock(channels*4, channels*4, channels, stride=2), #pix=4
+            DoubleBlazeBlock(channels*4, channels*4, channels),
+            DoubleBlazeBlock(channels*4, channels*4, channels),
+        )
+        
+        self.headL = Conv(channels * 4, NUM_ANCHORS * (C + 4 + 1), k=1, s=1)
+
+        self.headM1 = nn.Upsample(scale_factor=2, mode='nearest')
+        self.headM2 = Conv(96+96, NUM_ANCHORS * (C + 4 + 1), k=1, s=1)     
+                
+        self.apply(BlazeFace.initialize)
+        
+    def forward(self, x):
+        #backbone
+        xA = self.backboneA(x)
+        xB = self.backboneB(xA)
+
+        #heads (large, medium)
+        oL = self.headL(xB)
+
+        oM = self.headM1(xB)
+        oM = torch.cat([xA, oM], dim=1)
+        oM = self.headM2(oM)
+
+        #reshape
+        preds = []
+        for o in [oL, oM]:
+            b, c, h, w = o.shape
+            o = torch.reshape(o, (b, NUM_ANCHORS, (C + 4 + 1), h, w))
+            o = torch.moveaxis(o, 2, -1)
+            preds.append(o)
+
+        return preds
+    
+    def initialize(module):
+        if isinstance(module, nn.Conv2d):
+            nn.init.kaiming_normal_(module.weight.data)
+            nn.init.constant_(module.bias.data, 0)
+            
+        elif isinstance(module, nn.BatchNorm2d):
+            nn.init.constant_(module.weight.data, 1)
+            nn.init.constant_(module.bias.data, 0)    
+
+
+if __name__ == "__main__":
+    model = BlazeFace().to(device)
+    x = torch.randn((8, 3, 128, 128)).to(device)
+    out = model(x)
+
+    #assert out[0].shape == (8, 3, S[0], S[0], C + 5)
+    #print("Success!")
+    
+    torch.save(model, "model.pth")

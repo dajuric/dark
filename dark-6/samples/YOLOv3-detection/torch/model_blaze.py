@@ -5,6 +5,8 @@ from config import *
 
 # https://github.com/deepcam-cn/yolov5-face/blob/master/models/common.py
 
+# https://github.com/deepcam-cn/yolov5-face/blob/master/models/common.py
+
 def autopad(k, p=None):  # kernel, padding
     # Pad to 'same'
     if p is None:
@@ -169,15 +171,15 @@ class BlazeFace(nn.Module):
             
         elif isinstance(module, nn.BatchNorm2d):
             nn.init.constant_(module.weight.data, 1)
-            nn.init.constant_(module.bias.data, 0)    
+            nn.init.constant_(module.bias.data, 0)       
 
 
 if __name__ == "__main__":
-    model = BlazeFace().to(device)
-    x = torch.randn((8, 3, 128, 128)).to(device)
+    model = BlazeFace()
+    x = torch.randn((8, 3, 128, 128))
     out = model(x)
 
     assert out[0].shape == (8, 3, S[0], S[0], C + 5)
     print("Success!")
     
-    #torch.save(model, "model.pth")
+    torch.save(model, "model.pth")
