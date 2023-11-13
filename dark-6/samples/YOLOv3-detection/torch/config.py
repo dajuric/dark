@@ -7,7 +7,7 @@ from utils import seed_everything
 import os
 
 script_dir = os.path.dirname(os.path.realpath(__file__))
-DB_PATH = f"{script_dir}/../db/"
+DB_PATH = f"{script_dir}/../db/TCDCN/"
 MODEL_PATH = f"{script_dir}/model.pt"
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
@@ -28,7 +28,7 @@ MAP_IOU_THRESH = 0.5
 NMS_IOU_THRESH = 0.45
 S = [IMAGE_SIZE // 32, IMAGE_SIZE // 16, IMAGE_SIZE // 8]
 PIN_MEMORY = False
-LOAD_MODEL = False
+LOAD_MODEL = True
 SAVE_MODEL = True
 
 ANCHORS = [
@@ -69,7 +69,7 @@ train_transforms = A.Compose(
         A.Normalize(mean=[0, 0, 0], std=[1, 1, 1], max_pixel_value=255,),
         ToTensorV2(),
     ],
-    bbox_params=A.BboxParams(format="yolo", min_visibility=0.4, label_fields=[],),
+    bbox_params=A.BboxParams(format="yolo", min_visibility=0.4, label_fields=[], ),
 )
 test_transforms = A.Compose(
     [

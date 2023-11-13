@@ -85,7 +85,7 @@ def main():
             save_checkpoint(model, optimizer, filename=config.MODEL_PATH)
 
         if epoch > 0 and epoch % 3 == 0:
-            plot_couple_examples(model, test_loader, 0.4, 0.5, scaled_anchors)
+            plot_couple_examples(model, test_loader, 0.6, 0.5, scaled_anchors)
 
         #print(f"Currently epoch {epoch}")
         #print("On Train Eval loader:")

@@ -100,7 +100,7 @@ def test():
     transform = config.test_transforms
 
     dataset = YOLODataset(
-        f"{config.DB_PATH}/val/",
+        f"{config.DB_PATH}/",
         S=[13, 26, 52],
         anchors=anchors,
         transform=transform,

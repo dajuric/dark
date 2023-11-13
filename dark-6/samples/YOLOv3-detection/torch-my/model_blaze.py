@@ -98,4 +98,4 @@ if __name__ == "__main__":
     assert out[0].shape == (8, 3, S[0], S[0], C + 5)
     print("Success!")
     
-    torch.save(model, "model.pth")
+    #torch.save(model, "model.pth")

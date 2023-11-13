@@ -448,13 +448,13 @@ def get_loaders(db_dir):
     IMAGE_SIZE = config.IMAGE_SIZE
 
     train_dataset = YOLODataset(
-        f"{db_dir}/train/",
+        f"{db_dir}/",
         transform=config.train_transforms,
         S=[IMAGE_SIZE // 32, IMAGE_SIZE // 16, IMAGE_SIZE // 8],
         anchors=config.ANCHORS,
     )
     test_dataset = YOLODataset(
-        f"{db_dir}/val/",
+        f"{db_dir}/",
         transform=config.test_transforms,
         S=[IMAGE_SIZE // 32, IMAGE_SIZE // 16, IMAGE_SIZE // 8],
         anchors=config.ANCHORS,

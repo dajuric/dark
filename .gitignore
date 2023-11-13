@@ -9,5 +9,5 @@ __pycache__
 #all serialized models
 *.pickle
 #unignore all md and py files
-!*.md
-!*.py
+!**/*.md
+!**/*.py
