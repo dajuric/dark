@@ -1,44 +1,17 @@
-"""
-Creates a Pytorch dataset to load the Pascal VOC & MS COCO datasets
-"""
-
-import config
-import numpy as np
-import os
 import torch
-import glob
-
-from PIL import Image, ImageFile
+import numpy as np
 from torch.utils.data import Dataset, DataLoader
-from utils import (
-    cells_to_bboxes,
-    iou_width_height as iou,
-    non_max_suppression as nms,
-    plot_image
-)
+from PIL import Image
+from config import *
+from utils import *
+import glob
+import random
 
-ImageFile.LOAD_TRUNCATED_IMAGES = True
-
-class YOLODataset(Dataset):
-    def __init__(
-        self,
-        img_dir,
-        anchors,
-        image_size=416,
-        S=[13, 26, 52],
-        C=20,
-        transform=None,
-    ):
-        self.lblFiles = sorted(glob.glob(f"{img_dir}/**/*.txt", recursive=True))
-        self.img_dir = img_dir
-        self.image_size = image_size
-        self.transform = transform
-        self.S = S
-        self.anchors = torch.tensor(anchors[0] + anchors[1])  # for all 3 scales
-        self.num_anchors = 2 * 3
-        self.num_anchors_per_scale = 3
-        self.C = C
-        self.ignore_iou_thresh = 0.5
+class YoloDataset(Dataset):
+    def __init__(self, im_folder, imT=None):
+        super().__init__()
+        self.lblFiles = sorted(glob.glob(f"{im_folder}/**/*.txt", recursive=True))
+        self.imT = imT
 
     def __len__(self):
         return len(self.lblFiles)
@@ -47,46 +20,27 @@ class YOLODataset(Dataset):
         lblFile = self.lblFiles[index]
         imFile  = lblFile.replace(".txt", ".jpg")
 
-        image = np.array(Image.open(imFile).convert("RGB"))
-        bboxes = self._read_boxes(lblFile)
+        im = np.array(Image.open(imFile).convert("RGB"))
+        boxes = self._read_boxes(lblFile)
 
-        if self.transform:
-            augmentations = self.transform(image=image, bboxes=bboxes)
-            image = augmentations["image"]
-            bboxes = augmentations["bboxes"]
+        if self.imT:
+            augments = self.imT(image=im, bboxes=boxes)
+            im = augments["image"]
+            boxes = augments["bboxes"]
 
-        # Below assumes 3 scale predictions (as paper) and same num of anchors per scale
-        targets = [torch.zeros((self.num_anchors // 2, S, S, 6)) for S in self.S]
-        for box in bboxes:
-            iou_anchors = iou(torch.tensor(box[2:4]), self.anchors)
-            anchor_indices = iou_anchors.argsort(descending=True, dim=0)
-            x, y, width, height, class_label = box
-            has_anchor = [False] * 2  # each scale should have one anchor
-            for anchor_idx in anchor_indices:
-                scale_idx = anchor_idx // self.num_anchors_per_scale
-                anchor_on_scale = anchor_idx % self.num_anchors_per_scale
-                S = self.S[scale_idx]
-                i, j = int(S * y), int(S * x)  # which cell
-                anchor_taken = targets[scale_idx][anchor_on_scale, i, j, 0]
-                if not anchor_taken and not has_anchor[scale_idx]:
-                    targets[scale_idx][anchor_on_scale, i, j, 0] = 1
-                    x_cell, y_cell = S * x - j, S * y - i  # both between [0,1]
-                    width_cell, height_cell = (
-                        width * S,
-                        height * S,
-                    )  # can be greater than 1 since it's relative to cell
-                    box_coordinates = torch.tensor(
-                        [x_cell, y_cell, width_cell, height_cell]
-                    )
-                    targets[scale_idx][anchor_on_scale, i, j, 1:5] = box_coordinates
-                    targets[scale_idx][anchor_on_scale, i, j, 5] = int(class_label)
-                    has_anchor[scale_idx] = True
+        targets = []
+        for sIdx in range(len(S)):
+            sAnchors = ANCHORS[sIdx]
+            sTargets = torch.zeros(NUM_ANCHORS, S[sIdx], S[sIdx], 4+1+1)
+            
+            for box in boxes:
+                self._assign_cell(box, sTargets, sAnchors, S[sIdx])
 
-                elif not anchor_taken and iou_anchors[anchor_idx] > self.ignore_iou_thresh:
-                    targets[scale_idx][anchor_on_scale, i, j, 0] = -1  # ignore prediction
+            targets.append(sTargets)
 
-        return image, tuple(targets)
-    
+        return im, targets
+
+
     def _read_boxes(self, lblFile):
         boxes = np.loadtxt(lblFile, delimiter=" ", ndmin=2, dtype=np.float64)
         boxes = np.roll(boxes, -1)
@@ -94,36 +48,66 @@ class YOLODataset(Dataset):
 
         return boxes
 
+    def _assign_cell(self, box, targets, anchors, s):
+        x, y, w, h, lbl = box
+        iou_anchors = self._iou_wh(box[2:4], anchors)
+        aIndices = iou_anchors.argsort(axis=0)[::-1]
+        scale_has_anchor = False
 
-def test():
-    anchors = config.ANCHORS
-    transform = config.test_transforms
+        for aIdx in aIndices:
+            r, c = int(s * y), int(s * x)
 
-    dataset = YOLODataset(
-        f"{config.DB_PATH}/",
-        S=[13, 26],
-        anchors=anchors,
-        transform=transform,
-    )
-    S = [13, 26]
-    scaled_anchors = torch.tensor(anchors) / (
-        1 / torch.tensor(S).unsqueeze(1).unsqueeze(1).repeat(1, 3, 2)
-    )
-    loader = DataLoader(dataset=dataset, batch_size=1, shuffle=True)
-    for x, y in loader:
-        boxes = []
+            if scale_has_anchor and iou_anchors[aIdx] > 0.5:
+                targets[aIdx, r, c, 0] = -1
+                continue
 
-        for i in range(len(y)):
-            anchor = scaled_anchors[i]
-            print(anchor.shape)
-            print(y[i].shape)
-            boxes += cells_to_bboxes(
-                y[i], is_preds=False, S=y[i].shape[2], anchors=anchor
-            )[0]
-        boxes = nms(boxes, iou_threshold=1, threshold=0.7, box_format="midpoint")
-        print(boxes)
-        plot_image(x[0].permute(1, 2, 0).to("cpu"), boxes, 0)
+            anchor_taken = targets[aIdx, r, c, 0]
+            if scale_has_anchor or anchor_taken: 
+                continue
+            
+            x_cell, y_cell = s * x - c, s * y - r
+            w_cell, h_cell = s * w,     s * h
+            box_coords = [x_cell, y_cell, w_cell, h_cell]
+
+            targets[aIdx, r, c, 0] = 1
+            targets[aIdx, r, c, 1:5] = torch.tensor(box_coords)
+            targets[aIdx, r, c, 5] = int(lbl)
+            
+            scale_has_anchor = True
+            
+    def _iou_wh(self, box, anchors):
+        ious = []
+        for a in anchors:
+            intersect = min(box[0], a[0]) *  min(box[1], a[1])
+            union = box[0] * box[1] + a[0] * a[1] - intersect
+            iou = intersect / union
+            ious.append(iou)
+
+        return np.array(ious)
+    
+def get_dataloaders():
+    dbTrain = YoloDataset(f"{DB_PATH}/", train_transforms)
+    dbTest  = YoloDataset(f"{DB_PATH}/", test_transforms) 
+
+    workers = 16
+    trainLoader = DataLoader(dbTrain, BATCH_SIZE, shuffle=True,  num_workers=workers)
+    testLoader  = DataLoader(dbTest,  BATCH_SIZE, shuffle=False, num_workers=workers)
+
+    print(f"Db samples: train {len(dbTrain)}, test {len(dbTest)}")
+    return trainLoader, testLoader
 
 
 if __name__ == "__main__":
-    test()
+    dataset = YoloDataset(f"{DB_PATH}/", test_transforms)
+
+    im, target = dataset[382]
+    boxes = []
+
+    for sIdx in range(len(target)):
+        s_boxes = cell_to_boxes(target[sIdx].unsqueeze(0), S[sIdx])
+        boxes = [*boxes, *s_boxes]
+
+    im = im.permute(1, 2, 0).numpy()
+    plot_boxes(im, boxes)
+    cv2.imshow("Test", im)
+    cv2.waitKey()

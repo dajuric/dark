@@ -1,97 +1,87 @@
-"""
-Main file for training Yolo model on Pascal VOC and COCO dataset
-"""
-
-import config
-import torch
-import torch.optim as optim
+from torch.optim import *
+from torch.optim.lr_scheduler import *
+from config import *
+from dataset import *
+from model import BlazeFace as YoloNet
+from loss import *
+from utils import *
+from dataset import *
+from rich.progress import track
 import os
 
-from model_blaze import BlazeFace
-from tqdm import tqdm
-from utils import (
-    mean_average_precision,
-    cells_to_bboxes,
-    get_evaluation_bboxes,
-    save_checkpoint,
-    load_checkpoint,
-    check_class_accuracy,
-    get_loaders,
-    plot_couple_examples
-)
-from loss import YoloLoss
-import warnings
-warnings.filterwarnings("ignore")
+sAnchors = get_scaled_anchors().to(device)
 
-#torch.backends.cudnn.benchmark = True
+def train_loop(dLoader: DataLoader, model: YoloNet, loss_fn: YoloLoss, optimizer: Optimizer):
+    model.train()
 
-
-def train_fn(train_loader, model, optimizer, loss_fn, scaler, scaled_anchors):
-    loop = tqdm(train_loader, leave=True)
     losses = []
-    for batch_idx, (x, y) in enumerate(loop):
-        x = x.to(config.DEVICE)
-        y0, y1 = (
-            y[0].to(config.DEVICE),
-            y[1].to(config.DEVICE)
-        )
+    mean_loss = 0.0
 
-        out = model(x)
+    for X, y in track(dLoader, f"Train... [{mean_loss:3.2f}]"):
+        X, y0, y1 = X.to(device), y[0].to(device), y[1].to(device)
+        pred = model(X)
+
         loss = (
-            loss_fn(out[0], y0, scaled_anchors[0])
-            + loss_fn(out[1], y1, scaled_anchors[1])
-        )
+            loss_fn(pred[0], y0, sAnchors[0]) +
+            loss_fn(pred[1], y1, sAnchors[1])
+        ) 
 
         losses.append(loss.item())
+        mean_loss = sum(losses) / len(losses)
+
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-        # scaler.scale(loss).backward()
-        # scaler.step(optimizer)
-        # scaler.update()
 
-        # update progress bar
-        mean_loss = sum(losses) / len(losses)
-        loop.set_postfix(loss=mean_loss)
+    print(f"Mean train loss: {mean_loss}")
 
+@torch.no_grad()
+def test_loop(dLoader: DataLoader, model: YoloNet, loss_fn: YoloLoss):
+    model.eval()
 
+    losses = []
+    mean_loss = 0.0
 
-def main():
-    model = BlazeFace().to(config.DEVICE)
-    optimizer = optim.Adam(
-        model.parameters(), lr=config.LEARNING_RATE, weight_decay=config.WEIGHT_DECAY
-    )
-    loss_fn = YoloLoss()
-    scaler = torch.cuda.amp.GradScaler()
+    for X, y in track(dLoader, f"Eval...  [{mean_loss:3.2f}]"):
+        X, y0, y1 = X.to(device), y[0].to(device), y[1].to(device)
+        pred = model(X)
 
-    train_loader, test_loader = get_loaders(config.DB_PATH)
-
-    if config.LOAD_MODEL:
-        load_checkpoint(
-            config.MODEL_PATH, model, optimizer, config.LEARNING_RATE
+        loss = (
+            loss_fn(pred[0], y0, sAnchors[0]) +
+            loss_fn(pred[1], y1, sAnchors[1])
         )
 
-    scaled_anchors = (
-        torch.tensor(config.ANCHORS)
-        * torch.tensor(config.S).unsqueeze(1).unsqueeze(1).repeat(1, 3, 2)
-    ).to(config.DEVICE)
+        losses.append(loss.item())
+        mean_loss = sum(losses) / len(losses)
 
-    for epoch in range(config.NUM_EPOCHS):    
-        train_fn(train_loader, model, optimizer, loss_fn, scaler, scaled_anchors)
+    print(f"Mean test loss: {mean_loss}")
+    save_detection_samples(model, dLoader.dataset, sAnchors)
+    return mean_loss
 
-        if config.SAVE_MODEL:
-            save_checkpoint(model, optimizer, filename=config.MODEL_PATH)
+def main():
+    model = YoloNet().to(device)
+    if os.path.exists(MODEL_PATH): model = torch.load(MODEL_PATH, map_location=device)
 
-        if epoch > 0 and epoch % 3 == 0:
-            plot_couple_examples(model, test_loader, 0.6, 0.5, scaled_anchors)
+    loss_fn = YoloLoss()
+    trLoader, teLoader = get_dataloaders()
 
-        #print(f"Currently epoch {epoch}")
-        #print("On Train Eval loader:")
-        #print("On Train loader:")
-        #check_class_accuracy(model, train_loader, threshold=config.CONF_THRESHOLD)
+    optimizer = Adam(model.parameters(), lr=LEARNING_RATE, weight_decay=WEIGHT_DECAY)
+    scheduler = ReduceLROnPlateau(optimizer, 'min', verbose=True)
 
+    min_test_loss = float("inf")
+    for epoch in range(NUM_EPOCHS):
+        print(f"\n-----Epoch: {epoch}-----")
+
+        train_loop(trLoader, model, loss_fn, optimizer)
+        test_loss = test_loop(teLoader, model, loss_fn)
+        scheduler.step(test_loss)
+
+        if test_loss < min_test_loss:
+            torch.save(model, MODEL_PATH)
+            min_test_loss = test_loss
 
 
 if __name__ == "__main__":
     os.environ["PYDEVD_DISABLE_FILE_VALIDATION"] = "1"
+    np.seterr(over='raise')
     main()
