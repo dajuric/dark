@@ -1,5 +1,5 @@
 import dark
-from .module import Module, Softmax
+from .module import Module, Sigmoid, Softmax
 
 class MSELoss(Module):
     def __init__(self):
@@ -15,6 +15,7 @@ class MSELoss(Module):
 class BCEWithLogitsLoss(Module):
     def __init__(self):
         super().__init__()
+        self.sigmoid = Sigmoid()
 
     def forward(self, predictions, targets):
         predictions = self.sigmoid(predictions)
@@ -26,10 +27,6 @@ class BCEWithLogitsLoss(Module):
         loss  = dark.neg(loss)
         return loss
     
-    def sigmoid(self, x):
-        den = dark.add(1, dark.exp(dark.neg(x)))
-        return dark.div(1, den)
-
 class CrossEntropyLoss(Module):
     def __init__(self):
         super().__init__()

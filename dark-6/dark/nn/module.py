@@ -125,6 +125,14 @@ class Linear(Module):
         result = dark.add(dark.matmul(x, dark.transpose(self.weights)), self.bias)
         return result
 
+class Sigmoid(Module):
+    def __init__(self):
+       super().__init__()
+    
+    def forward(self, x):
+        den = dark.add(1, dark.exp(dark.neg(x)))
+        return dark.div(1, den)
+
 class ReLU(Module):
     def __init__(self):
        super().__init__()

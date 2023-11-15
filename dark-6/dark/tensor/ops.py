@@ -12,3 +12,6 @@ except:
     
 def is_cuda():
     return _is_cuda
+
+def sigmoid(x):
+    return 1 / (1 + exp(-x))

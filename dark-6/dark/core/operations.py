@@ -279,6 +279,21 @@ class Slice(Operation):
         dldy[self.dims] = grad
 
         return [dldy]
+    
+class Mask(Operation):
+
+    def forward(self, input, **kwargs):
+        self.mask = kwargs["mask"]
+        assert self.mask.shape == input.shape
+        
+        out = input[self.mask]
+        return out
+    
+    def backward(self, grad, out, input):
+        dldy = dt.zeros(input.shape)
+        dldy[self.mask] = grad
+
+        return [dldy]
         
 class Dropout(Operation):
     
@@ -371,3 +386,6 @@ def cat(inputs, dim = 0):
 
 def dropout(x, p=0.2):
     return Dropout.apply(x, p=p)
+
+def mask(x, mask):
+    return Mask.apply(x, mask=mask)
