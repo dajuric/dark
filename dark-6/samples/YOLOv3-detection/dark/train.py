@@ -6,7 +6,6 @@ from model import BlazeFace as YoloNet
 from loss import *
 from utils import *
 from dataset import *
-from rich.progress import track
 import os
 import pickle
 
@@ -18,7 +17,7 @@ def train_loop(dLoader: DataLoader, model: YoloNet, loss_fn: YoloLoss, optimizer
     losses = []
     mean_loss = 0.0
 
-    for X, y0, y1 in track(dLoader, f"Train... [{mean_loss:3.2f}]"):
+    for X, y0, y1 in track(dLoader, lambda: f"Train... [{mean_loss:3.2f}]"):
         pred = model(X)
 
         loss = dark.add(
@@ -33,7 +32,6 @@ def train_loop(dLoader: DataLoader, model: YoloNet, loss_fn: YoloLoss, optimizer
         loss.backward()
         optimizer.step()
 
-    print(f"Mean train loss: {mean_loss}")
 
 def test_loop(dLoader: DataLoader, model: YoloNet, loss_fn: YoloLoss):
     model.eval()
@@ -41,7 +39,7 @@ def test_loop(dLoader: DataLoader, model: YoloNet, loss_fn: YoloLoss):
     losses = []
     mean_loss = 0.0
 
-    for X, y0, y1 in track(dLoader, f"Eval...  [{mean_loss:3.2f}]"):
+    for X, y0, y1 in track(dLoader, lambda: f"Eval...  [{mean_loss:3.2f}]"):
         pred = model(X)
 
         loss = dark.add(
@@ -52,7 +50,6 @@ def test_loop(dLoader: DataLoader, model: YoloNet, loss_fn: YoloLoss):
         losses.append(loss.data.item())
         mean_loss = sum(losses) / len(losses)
 
-    print(f"Mean test loss: {mean_loss}")
     save_detection_samples(model, dLoader.dataset, sAnchors)
     return mean_loss
 
@@ -62,7 +59,6 @@ def main():
 
     loss_fn = YoloLoss()
     trLoader, teLoader = get_dataloaders()
-
     optimizer = Adam(model.parameters(), lr=LEARNING_RATE)
 
     min_test_loss = float("inf")

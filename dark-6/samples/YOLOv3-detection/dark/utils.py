@@ -1,6 +1,7 @@
 import dark.tensor as dt
 import numpy as np
 import cv2
+from rich.progress import BarColumn, Progress, TextColumn, TimeRemainingColumn, TaskProgressColumn
 from config import *
 
 def iou(boxesA, boxesB):
@@ -91,7 +92,7 @@ def plot_boxes(im, boxes):
         color = colors[int(lbl)].tolist()
         cv2.rectangle(im, (x, y), (x + w, y + h), color, 3)
 
-def save_detection_samples(model, dataset, sAnchors, indices = [0, 1, 2, 3, 4]):
+def save_detection_samples(model, dataset, sAnchors, indices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]):
 
     for i in indices:
         im, _, _ = dataset[i]
@@ -109,6 +110,21 @@ def save_detection_samples(model, dataset, sAnchors, indices = [0, 1, 2, 3, 4]):
         
         plot_boxes(im, bboxes)
         cv2.imwrite(f"{script_dir}/out-{i}.png", im)
+
+def track(sequence, desc_func):
+    progress = Progress(
+        TextColumn("[progress.description]{task.description}"),
+        BarColumn(),
+        TaskProgressColumn(show_speed=True),
+        TimeRemainingColumn(),
+    )
+
+    with progress:
+        tid = progress.add_task(desc_func(), total=len(sequence))
+
+        for value in sequence:
+            yield value
+            progress.update(tid, description=desc_func(), refresh=True, advance=1)
 
 
 if __name__ == "__main__":

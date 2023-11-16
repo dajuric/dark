@@ -13,7 +13,7 @@ def predict(model, im):
     im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
 
     im = test_transforms(image=im, bboxes=[])["image"]
-    im = im.unsqueeze(0)
+    im = np.expand_dims(im, 0)
     pred = model(im)
     
     bboxes = [
@@ -24,11 +24,11 @@ def predict(model, im):
     return bboxes
     
 def main():
-    im_files = sorted(glob(f"{DB_PATH}/train/**/*.jpg", recursive=True))
+    im_files = [ "/hdd1/djuric/Desktop/db/celebA/img_celeba/000551.jpg" ] #sorted(glob(f"{DB_PATH}/train/**/*.jpg", recursive=True))
     im_file = random.choice(im_files)
     
-    im = cv2.imread(im_file)  
-    model = pickle.load(open(MODEL_PATH, "r"))
+    im = cv2.imread(im_file); im = cv2.resize(im, None, fx=0.5, fy=0.5)  
+    model = pickle.load(open(MODEL_PATH, "rb"))
     model.eval()
 
     bboxes = predict(model, im)

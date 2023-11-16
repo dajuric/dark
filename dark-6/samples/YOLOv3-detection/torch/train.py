@@ -6,7 +6,6 @@ from model import BlazeFace as YoloNet
 from loss import *
 from utils import *
 from dataset import *
-from rich.progress import track
 import os
 
 sAnchors = get_scaled_anchors().to(device)
@@ -17,7 +16,7 @@ def train_loop(dLoader: DataLoader, model: YoloNet, loss_fn: YoloLoss, optimizer
     losses = []
     mean_loss = 0.0
 
-    for X, y in track(dLoader, f"Train... [{mean_loss:3.2f}]"):
+    for X, y in track(dLoader, lambda: f"Train... [{mean_loss:3.2f}]"):
         X, y0, y1 = X.to(device), y[0].to(device), y[1].to(device)
         pred = model(X)
 
@@ -33,7 +32,6 @@ def train_loop(dLoader: DataLoader, model: YoloNet, loss_fn: YoloLoss, optimizer
         loss.backward()
         optimizer.step()
 
-    print(f"Mean train loss: {mean_loss}")
 
 @torch.no_grad()
 def test_loop(dLoader: DataLoader, model: YoloNet, loss_fn: YoloLoss):
@@ -42,7 +40,7 @@ def test_loop(dLoader: DataLoader, model: YoloNet, loss_fn: YoloLoss):
     losses = []
     mean_loss = 0.0
 
-    for X, y in track(dLoader, f"Eval...  [{mean_loss:3.2f}]"):
+    for X, y in track(dLoader, lambda: f"Eval...  [{mean_loss:3.2f}]"):
         X, y0, y1 = X.to(device), y[0].to(device), y[1].to(device)
         pred = model(X)
 
@@ -54,7 +52,6 @@ def test_loop(dLoader: DataLoader, model: YoloNet, loss_fn: YoloLoss):
         losses.append(loss.item())
         mean_loss = sum(losses) / len(losses)
 
-    print(f"Mean test loss: {mean_loss}")
     save_detection_samples(model, dLoader.dataset, sAnchors)
     return mean_loss
 
