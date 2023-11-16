@@ -287,11 +287,39 @@ class Mask(Operation):
         assert self.mask.shape == input.shape
         
         out = input[self.mask]
+        out = dt.expand_dims(out, 0)
         return out
     
     def backward(self, grad, out, input):
         dldy = dt.zeros(input.shape)
         dldy[self.mask] = grad
+
+        return [dldy]
+    
+class Reshape(Operation):
+
+    def forward(self, input, **kwargs):
+        self.out_shape = kwargs["shape"]  
+        out = input.reshape(self.out_shape)
+
+        return out
+    
+    def backward(self, grad, out, input):
+        dldy = grad.reshape(input.shape)
+
+        return [dldy]
+    
+class MoveAxis(Operation):
+
+    def forward(self, input, **kwargs):
+        self.src_dim = kwargs["source"]
+        self.tgt_dim = kwargs["destination"]
+
+        out = dt.moveaxis(input, self.src_dim, self.tgt_dim)
+        return out
+    
+    def backward(self, grad, out, input):
+        dldy = dt.moveaxis(grad, self.tgt_dim, self.src_dim)
 
         return [dldy]
         
@@ -389,3 +417,9 @@ def dropout(x, p=0.2):
 
 def mask(x, mask):
     return Mask.apply(x, mask=mask)
+
+def reshape(x, shape):
+    return Reshape.apply(x, shape=shape)
+
+def moveaxis(x, source, destination):
+    return MoveAxis.apply(x, source=source, destination=destination)

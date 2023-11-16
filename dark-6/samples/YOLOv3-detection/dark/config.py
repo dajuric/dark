@@ -1,8 +1,8 @@
 import dark.tensor as dt
-from dark.utils.transforms import ToTensorV2
 import albumentations as A
 import cv2
 import os
+import numpy as np
 
 script_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -24,10 +24,23 @@ S = [IM_SIZE // 32, IM_SIZE // 16]
 
 BATCH_SIZE = 64
 LEARNING_RATE = 1e-3
-WEIGHT_DECAY = 1e-2
 NUM_EPOCHS = 50
 
 print(f"Running on: {'cuda' if dt.is_cuda() else 'cpu'}")
+
+class ToTensorV2():
+    def __init__(self):
+        super().__init__()
+
+    def __call__(self, **kwargs):
+        im = kwargs["image"]
+
+        if im.ndim < 3: im = np.expand_dims(im, -1)      
+        im = np.rollaxis(im, -1, 0) #channels first
+
+        out = { "image": im, "bboxes": np.array(kwargs["bboxes"]) }
+        return out
+
 
 test_transforms = A.Compose(
     [

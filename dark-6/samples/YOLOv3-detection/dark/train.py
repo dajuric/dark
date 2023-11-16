@@ -18,8 +18,7 @@ def train_loop(dLoader: DataLoader, model: YoloNet, loss_fn: YoloLoss, optimizer
     losses = []
     mean_loss = 0.0
 
-    for X, y in track(dLoader, f"Train... [{mean_loss:3.2f}]"):
-        X, y0, y1 = X, y[0], y[1]
+    for X, y0, y1 in track(dLoader, f"Train... [{mean_loss:3.2f}]"):
         pred = model(X)
 
         loss = dark.add(
@@ -27,7 +26,7 @@ def train_loop(dLoader: DataLoader, model: YoloNet, loss_fn: YoloLoss, optimizer
             loss_fn(pred[1], y1, sAnchors[1])
         ) 
 
-        losses.append(loss.item())
+        losses.append(loss.data.item())
         mean_loss = sum(losses) / len(losses)
 
         optimizer.zero_grad()
@@ -36,15 +35,13 @@ def train_loop(dLoader: DataLoader, model: YoloNet, loss_fn: YoloLoss, optimizer
 
     print(f"Mean train loss: {mean_loss}")
 
-@torch.no_grad()
 def test_loop(dLoader: DataLoader, model: YoloNet, loss_fn: YoloLoss):
     model.eval()
 
     losses = []
     mean_loss = 0.0
 
-    for X, y in track(dLoader, f"Eval...  [{mean_loss:3.2f}]"):
-        X, y0, y1 = X, y[0], y[1]
+    for X, y0, y1 in track(dLoader, f"Eval...  [{mean_loss:3.2f}]"):
         pred = model(X)
 
         loss = dark.add(
@@ -52,7 +49,7 @@ def test_loop(dLoader: DataLoader, model: YoloNet, loss_fn: YoloLoss):
             loss_fn(pred[1], y1, sAnchors[1])
         )
 
-        losses.append(loss.item())
+        losses.append(loss.data.item())
         mean_loss = sum(losses) / len(losses)
 
     print(f"Mean test loss: {mean_loss}")
@@ -61,12 +58,12 @@ def test_loop(dLoader: DataLoader, model: YoloNet, loss_fn: YoloLoss):
 
 def main():
     model = YoloNet()
-    if os.path.exists(MODEL_PATH): model = pickle.load(open(MODEL_PATH, "r"))
+    if os.path.exists(MODEL_PATH): model = pickle.load(open(MODEL_PATH, "rb"))
 
     loss_fn = YoloLoss()
     trLoader, teLoader = get_dataloaders()
 
-    optimizer = Adam(model.parameters(), lr=LEARNING_RATE, weight_decay=WEIGHT_DECAY)
+    optimizer = Adam(model.parameters(), lr=LEARNING_RATE)
 
     min_test_loss = float("inf")
     for epoch in range(NUM_EPOCHS):
@@ -76,11 +73,10 @@ def main():
         test_loss = test_loop(teLoader, model, loss_fn)
 
         if test_loss < min_test_loss:
-            torch.save(model, MODEL_PATH)
+            pickle.dump(model, open(MODEL_PATH, "wb"))
             min_test_loss = test_loss
 
 
 if __name__ == "__main__":
-    os.environ["PYDEVD_DISABLE_FILE_VALIDATION"] = "1"
     np.seterr(over='raise')
     main()

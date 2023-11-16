@@ -91,7 +91,7 @@ def plot_boxes(im, boxes):
         color = colors[int(lbl)].numpy().tolist()
         cv2.rectangle(im, (x, y), (x + w, y + h), color, 3)
 
-def save_detection_samples(model, dataset, sAnchors, indices = [0, 1, 2, 3, 4]):
+def save_detection_samples(model, dataset, sAnchors, indices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]):
     sAnchors = sAnchors.cpu()
 
     for i in indices:

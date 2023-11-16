@@ -6,7 +6,7 @@ import os
 
 script_dir = os.path.dirname(os.path.realpath(__file__))
 
-DB_PATH = f"{script_dir}/../db/TCDCN/"
+DB_PATH = f"{script_dir}/../db/"
 MODEL_PATH = f"{script_dir}/model.pt"
 C = 1
 TEST_SIZE = 0.1
@@ -25,7 +25,7 @@ S = [IM_SIZE // 32, IM_SIZE // 16]
 BATCH_SIZE = 64
 LEARNING_RATE = 1e-3
 WEIGHT_DECAY = 1e-2
-NUM_EPOCHS = 50
+NUM_EPOCHS = 100
 
 torch.manual_seed(0)
 device = "cuda" if torch.cuda.is_available() else "cpu"

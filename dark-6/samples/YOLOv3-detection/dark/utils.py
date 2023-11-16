@@ -14,12 +14,12 @@ def iou(boxesA, boxesB):
     boxB_x2 = boxesB[..., 0:1] + boxesB[..., 2:3] / 2
     boxB_y2 = boxesB[..., 1:2] + boxesB[..., 3:4] / 2
 
-    x1 = dt.max(boxA_x1, boxB_x1)
-    y1 = dt.max(boxA_y1, boxB_y1)
-    x2 = dt.min(boxA_x2, boxB_x2)
-    y2 = dt.min(boxA_y2, boxB_y2)
+    x1 = dt.maximum(boxA_x1, boxB_x1)
+    y1 = dt.maximum(boxA_y1, boxB_y1)
+    x2 = dt.maximum(boxA_x2, boxB_x2)
+    y2 = dt.maximum(boxA_y2, boxB_y2)
 
-    intersection = (x2 - x1).clamp(0) * (y2 - y1).clamp(0)
+    intersection = dt.clip(x2 - x1, 0, None) * dt.clip(y2 - y1, 0, None)
     boxA_area = abs((boxA_x2 - boxA_x1) * (boxA_y2 - boxA_y1))
     boxB_area = abs((boxB_x2 - boxB_x1) * (boxB_y2 - boxB_y1))
 
@@ -47,7 +47,7 @@ def cell_to_boxes(sPreds, s, threshold = 0.5, sAnchors = None):
         labels = sPreds[..., 5:6]
     else:  
         scores = dt.sigmoid(scores)
-        labels = dt.argmax(sPreds[..., 5:], dim=-1).unsqueeze(-1)
+        labels = dt.expand_dims(dt.argmax(sPreds[..., 5:], axis=-1), -1)
 
         sAnchors = sAnchors.reshape(1, NUM_ANCHORS, 1, 1, 2)
         boxes[..., 0:2] = dt.sigmoid(boxes[..., 0:2])
@@ -78,7 +78,7 @@ def cell_to_boxes(sPreds, s, threshold = 0.5, sAnchors = None):
     return bboxes
 
 def plot_boxes(im, boxes):
-    colors = (dt.rand((C, 3)) * 255).int()
+    colors = (dt.random.rand(*(C, 3)) * 255).astype(dt.int32)
     imH, imW, _ = im.shape
 
     for bb in boxes:
@@ -88,16 +88,15 @@ def plot_boxes(im, boxes):
         w = int(bw * imW)
         h = int(bh * imH)
 
-        color = colors[int(lbl)].numpy().tolist()
+        color = colors[int(lbl)].tolist()
         cv2.rectangle(im, (x, y), (x + w, y + h), color, 3)
 
 def save_detection_samples(model, dataset, sAnchors, indices = [0, 1, 2, 3, 4]):
-    sAnchors = sAnchors.cpu()
 
     for i in indices:
-        im, _ = dataset[i]
+        im, _, _ = dataset[i]
 
-        pred = model(im.unsqueeze(0))
+        pred = model(np.expand_dims(im, 0))
 
         bboxes = [
                 *cell_to_boxes(pred[0].data, S[0], sAnchors=sAnchors[0]),

@@ -29,14 +29,14 @@ class YoloDataset(Dataset):
         targets = []
         for sIdx in range(len(S)):
             sAnchors = ANCHORS[sIdx]
-            sTargets = np.zeros(NUM_ANCHORS, S[sIdx], S[sIdx], 4+1+1)
+            sTargets = np.zeros((NUM_ANCHORS, S[sIdx], S[sIdx], 4+1+1))
             
             for box in boxes:
                 self._assign_cell(box, sTargets, sAnchors, S[sIdx])
 
             targets.append(sTargets)
 
-        return im, targets
+        return im, *targets
 
 
     def _read_boxes(self, lblFile):
