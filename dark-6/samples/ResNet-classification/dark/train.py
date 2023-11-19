@@ -1,6 +1,5 @@
 import os
 import pickle
-import numpy as np
 import dark
 import dark.nn as nn
 from dark.nn.init import default_init_weights
