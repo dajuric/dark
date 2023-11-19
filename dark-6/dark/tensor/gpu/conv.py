@@ -1,7 +1,7 @@
 import cupy as cp
 from .util import im2col, col2im
 
-def conv2d_forward(X, W, stride, padding):
+def conv2d(X, W, stride, padding):
     n_filters, d_filter, h_filter, w_filter = W.shape
     n_x, d_x, h_x, w_x = X.shape
 
@@ -22,7 +22,7 @@ def conv2d_forward(X, W, stride, padding):
 
     return out
 
-def conv2d_backward(dout, X, W, stride, padding):
+def conv2d_grad(dout, X, W, stride, padding):
     n_filter, d_filter, h_filter, w_filter = W.shape
     X_col = im2col(X, h_filter, w_filter, padding=padding, stride=stride)
 

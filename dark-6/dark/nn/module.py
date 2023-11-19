@@ -226,7 +226,6 @@ class BatchNorm2d(Module):
 class ConvTranspose2d(Module):
     def __init__(self, in_channels, out_channels, kernel_size, stride = 1, padding = 0, output_padding = 0):
         super().__init__()
-        assert isinstance(kernel_size, int)
 
         self.weights = ZeroParam(in_channels, out_channels, kernel_size, kernel_size)
         self.bias    = ZeroParam(1,           out_channels, 1,          1)
@@ -237,6 +236,15 @@ class ConvTranspose2d(Module):
       
     def forward(self, input):
         return dark.add(dark.conv_transpose2d(input, self.weights, self.stride, self.padding, self.output_padding), self.bias)
+    
+class Upsample2d(Module):
+    def __init__(self, scale_factor = 2):
+        super().__init__()
+
+        self.factor = scale_factor
+      
+    def forward(self, input):
+        return dark.upsample2d(input, self.factor)  
     
 class Dropout(Module):
     def __init__(self, p = 0.2):

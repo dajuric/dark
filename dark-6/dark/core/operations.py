@@ -184,10 +184,10 @@ class Conv2d(Operation):
     def forward(self, x, k, **kwargs):
         self.padding = kwargs["padding"]
         self.stride = kwargs["stride"]
-        return dt.conv2d_forward(x, k, self.stride, self.padding)
+        return dt.conv2d(x, k, self.stride, self.padding)
 
     def backward(self, dldy, y, x, k):        
-        dldx, dldk = dt.conv2d_backward(dldy, x, k, self.stride, self.padding)        
+        dldx, dldk = dt.conv2d_grad(dldy, x, k, self.stride, self.padding)        
         return dldx, dldk
 
 class MaxPool2d(Operation):
@@ -195,11 +195,11 @@ class MaxPool2d(Operation):
     def forward(self, x, **kwargs):
         self.kernel_size = kwargs["kernel_size"]
         self.stride = kwargs["stride"]
-        res, self.locs = dt.maxpool2d_forward(x, self.kernel_size, self.stride)
+        res, self.locs = dt.max_pool2d(x, self.kernel_size, self.stride)
         return res
 
     def backward(self, dldy, y, x):
-        dldx = dt.maxpool2d_backward(dldy, x, self.locs, self.kernel_size, self.stride)
+        dldx = dt.max_unpool2d(dldy, self.locs, x.shape, self.kernel_size, self.stride)
         return [dldx]
     
 # https://towardsdatascience.com/what-is-transposed-convolutional-layer-40e5e6e31c11
@@ -214,23 +214,22 @@ class ConvTranspose2d(Operation):
         xe = self.dilate(x, self.stride)  
 
         _, _, kh, kw = k.shape   
-        result = dt.conv2d_forward(xe, k.transpose(1, 0, 2, 3), 1, kh - 1)  
+        result = dt.conv2d(xe, k.transpose(1, 0, 2, 3), 1, kh - 1)  
         result = self.pad(result, xe.shape, k.shape, self.padding, self.output_padding)
         return result
 
     def backward(self, dldy, y, x, k):
         #pad gradient and convolve w.r.t k
-        dldx = dt.conv2d_forward(dldy, k, self.stride, self.padding)
+        dldx = dt.conv2d(dldy, k, self.stride, self.padding)
                 
         #dilate x, convolve w.r.t dilated x and crop valid part
         xe = self.dilate(x, self.stride)
-        dldk = dt.conv2d_forward(dldy.transpose((1, 0, 2, 3)), xe.transpose((1, 0, 2, 3)), 1, self.padding) 
+        dldk = dt.conv2d(dldy.transpose((1, 0, 2, 3)), xe.transpose((1, 0, 2, 3)), 1, self.padding) 
         
         dldk = self.pad(dldk, dldy.shape, xe.shape, 0, 0)
         dldk = dt.swapaxes(dldk, 0, 1)
                 
         return dldx, dldk
-        pass
         
     def pad(self, o, x_shape, k_shape, padding, output_padding):
         _, _, x_h, x_w = x_shape
@@ -251,6 +250,37 @@ class ConvTranspose2d(Operation):
         xe[:, :, ::self.stride, ::self.stride] = x
 
         return xe
+    
+    
+# https://stackoverflow.com/questions/69728373/resize-1-channel-numpy-image-array-with-nearest-neighbour-interpolation
+class Upsample2d(Operation):
+    
+    def forward(self, x, **kwargs):
+        self.factor = kwargs["scale_factor"]
+        if self.factor != int(self.factor) and self.factor <= 0:
+            raise Exception("Factor must be a positive integer.")
+        
+        out = self.resize_nn(x, self.factor)  
+        return out
+    
+    def backward(self, dout, out, x):
+        dout = self.resize_nn(dout, 1 / self.factor) 
+        dout *= (self.factor * self.factor)
+        return [dout]
+    
+    def resize_nn(self, X, factor):
+        _, _, xh, xw = X.shape
+        
+        h_ind = self.per_axis(xh, int(factor * xh))
+        w_ind = self.per_axis(xw, int(factor * xw))
+        
+        out = X[:, :, h_ind[:, None], w_ind]
+        return out
+    
+    def per_axis(self, in_sz, out_sz):
+        ratio = 0.5 * in_sz / out_sz
+        indices = dt.linspace(ratio - 0.5, in_sz - ratio - 0.5, num=out_sz)
+        return dt.around(indices).astype(dt.int32)
     
 class Cat(Operation):
 
@@ -408,6 +438,9 @@ def max_pool2d(x, kernel_size = 2, stride = 2):
 
 def conv_transpose2d(s, k, stride = 1, padding = 0, output_padding = 0):
     return ConvTranspose2d.apply(s, k, padding = padding, stride = stride, output_padding = output_padding)
+
+def upsample2d(x, scale_factor = 2):
+    return Upsample2d.apply(x, scale_factor = scale_factor)
 
 def cat(inputs, dim = 0):
     return Cat.apply(*inputs, dim=dim)

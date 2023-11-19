@@ -5,17 +5,15 @@ import os
 random.seed(0)
 np.random.seed(0)
 
-im = np.random.randint(-16, +16, size=(2,  2, 9, 9)).astype(np.float64)
-k  = np.random.randint(-16, +16, size=(3,  2,  3,  3)).astype(np.float64)
+im = np.random.randint(-16, +16, size=(1, 3, 2, 2)).astype(np.float64)
  
 #---------------------------
 import torch as tt
 import torch.nn as nn
 
 st = tt.tensor(im, requires_grad=True)
-kt = tt.tensor(k, requires_grad=True)
 
-tRes = nn.functional.conv2d(st, kt, padding=(0, 0), stride=(1, 1))
+tRes = nn.functional.interpolate(st, scale_factor=3, mode='nearest')
 tRes = tt.sum(tRes)
 
 tRes.backward()
@@ -29,8 +27,7 @@ import dark
 import dark.tensor as dt
 
 sd = dark.Parameter(im)
-kd = dark.Parameter(k)
-dRes = dark.conv2d(sd, kd, padding=0, stride=1)
+dRes = dark.upsample2d(sd, factor=3)
 dRes = dark.sum(dRes)
 
 dRes.backward()
@@ -38,6 +35,5 @@ dRes.backward()
 
 
 print("Result equal? " + str(np.allclose(dt.numpy(dRes.data), tRes.detach().numpy(), rtol=0, atol=1e-3)))
-print("Grad K equal? " + str(np.allclose(dt.numpy(kd.grad),   kt.grad,               rtol=0, atol=1e-3)))
 print("Grad X equal? " + str(np.allclose(dt.numpy(sd.grad),   st.grad,               rtol=0, atol=1e-3)))
 print("Done")
