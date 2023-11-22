@@ -6,7 +6,7 @@ from config import *
 
 def get_loaders():
     def label_transform(l):
-        one_hot = dt.zeros(CLASS_COUNT, dtype=dt.float64)
+        one_hot = torch.zeros(CLASS_COUNT, dtype=torch.float32)
         one_hot[l] = 1
         return one_hot
 
