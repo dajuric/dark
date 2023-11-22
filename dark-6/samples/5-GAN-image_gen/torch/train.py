@@ -86,5 +86,5 @@ for e in range(EPOCHS):
     train_loop(netD, netG, dataloader, criterion, optimizerD, optimizerG)
     test_loop(netG, fixed_noise, e)
 
-    torch.save(netD, modelD_path)
-    torch.save(netG, modelG_path)
+    #torch.save(netD, modelD_path)
+    #torch.save(netG, modelG_path)

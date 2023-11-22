@@ -17,4 +17,3 @@ def plot(eval_func, range, x_param):
 
    plt.draw()
    plt.pause(0.5)
-   
