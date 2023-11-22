@@ -3,11 +3,11 @@ import torch.nn as nn
 import cv2
 
 def init_weights(m):
-    if isinstance(m, nn.Conv2d) or isinstance(m, nn.ConvTranspose2d):
+    if isinstance(m, nn.Conv2d):
         nn.init.normal_(m.weight.data, 0.0, 0.02)
         nn.init.zeros_(m.bias.data)
 
-    if isinstance(m, nn.Linear):
+    if isinstance(m, nn.BatchNorm2d):
         nn.init.normal_(m.weight.data, 1.0, 0.02)
         nn.init.zeros_(m.bias.data)
 
@@ -22,8 +22,7 @@ def save_samples(batch, filename, grid = (3, 5)):
         for c in range(w):
             
             im = batch[i]
-            den = torch.add(1, torch.exp(torch.negative(im)))
-            im = torch.divide(1, den)
+            im = torch.sigmoid(im)
             
             im = (im.squeeze() * 255).type(torch.uint8)
             im = torch.moveaxis(im, 0, 2)

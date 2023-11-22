@@ -35,6 +35,9 @@ def train_loop(netD: Module, netG: Module,
                dataLoader: DataLoader, criterion, 
                optimizerD: Optimizer, optimizerG: Optimizer):
 
+    netD.train()
+    netG.train()
+
     for i, (real, _) in enumerate(track(dataLoader, "Training")):
         real = real.to(device)
 
@@ -58,13 +61,13 @@ def train_loop(netD: Module, netG: Module,
         optimizerG.step()
 
         if i % 50 == 0:
-            print(f"errD: {errD.data.item():>7f}, errG: {errG.data.item():>7f}")
+            print(f"errD: {errD.item():>7f}, errG: {errG.item():>7f}")
 
 def test_loop(netG: Module, noise, epoch):
     netG.eval()  
     
     fake = netG(noise).detach()
-    save_samples(fake.data, f"{script_dir}/samples-{epoch}.png")          
+    save_samples(fake, f"{script_dir}/samples-{epoch}.png")          
      
             
 

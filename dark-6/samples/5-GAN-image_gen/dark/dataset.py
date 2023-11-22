@@ -4,7 +4,7 @@ from config import *
 
 def get_loader():
     tr = Compose(
-        Resize(64 ,64),
+        Resize(64, 64),
         Normalize(0.5, 0.5),
         ToTensorV2(),
     )
