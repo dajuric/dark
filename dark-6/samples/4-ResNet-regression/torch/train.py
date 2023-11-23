@@ -13,7 +13,7 @@ def train_loop(train_loader, model, criterion, optimizer):
     train_loss = 0.0
     model.train()
 
-    for data in track(train_loader, "Training"):
+    for data in track(train_loader, "Training..."):
         ims, kps = data
         ims, kps = ims.to(device), kps.to(device)
 
@@ -35,7 +35,7 @@ def test_loop(val_loader, model, criterion, epoch):
     val_loss = 0.0
     model.eval()
 
-    for data in track(val_loader, "Testing"):
+    for data in track(val_loader, "Testing... "):
         ims, kps = data
         ims, kps = ims.to(device), kps.to(device)
 
@@ -47,7 +47,7 @@ def test_loop(val_loader, model, criterion, epoch):
     val_loss = val_loss / len(val_loader)
     print(f"Eval: loss: {(val_loss * 100):>0.2f}") 
 
-    save_samples(val_loader.dataset, model, f"{script_dir}/samples-{epoch+1}.png", device=device)
+    save_samples(val_loader.dataset, model, f"{script_dir}/results-{epoch+1}.png", device=device)
     return val_loss
 
 
@@ -55,7 +55,7 @@ def main():
     tr_loader, te_loader = get_loaders()
     model = get_net()
     loss_fn = nn.MSELoss()
-    optimizer = optim.Adam(model.parameters(), lr=1e-3) #optim.SGD(model.parameters(), lr=1e-3, momentum=0.9)
+    optimizer = optim.Adam(model.parameters(), lr=1e-3)
     min_test_loss = float("inf")
 
     for e in range(EPOCHS):

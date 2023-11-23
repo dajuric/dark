@@ -65,6 +65,6 @@ def get_net():
 if __name__ == "__main__":
     model = Resnet9()
     
-    im = dark.Parameter(dt.random.random((1, 3, 32, 32)))
+    im = dark.Parameter(dt.random.random((4, 3, 32, 32)))
     result = model(im)
     print(result.data.shape)

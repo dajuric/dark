@@ -1,7 +1,9 @@
+
 from torch.utils.data import DataLoader
 from torchvision.datasets import ImageFolder
 from torchvision.transforms import *
 from config import *
+
 
 def get_loaders():
     def label_transform(l):
@@ -10,14 +12,16 @@ def get_loaders():
         return one_hot
 
     trTransforms = Compose([
-        Resize(IM_SIZE),
+        Resize((IM_SIZE, IM_SIZE)),
+        Grayscale(),
         RandomHorizontalFlip(),
         ToTensor(),
         Normalize(0.5, 0.5)
     ])
 
     teTransforms = Compose([
-        Resize(IM_SIZE),
+        Resize((IM_SIZE, IM_SIZE)),
+        Grayscale(),
         ToTensor(),
         Normalize(0.5, 0.5)
     ])

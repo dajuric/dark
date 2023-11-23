@@ -1,74 +1,94 @@
-import os
+import os, shutil
 import cv2
 from rich.progress import track
+import mediapipe as mp
+from glob import glob
+mp_face_detection = mp.solutions.face_detection
 
 script_dir = os.path.dirname(os.path.realpath(__file__))
 
-def read_file(txt_file):
-    f = open(txt_file, "r")
-    data = dict()
+def get_bbox(det):
+    normalized_bb = det.location_data.relative_bounding_box
+    x = min(max(normalized_bb.xmin, 0), 1)
+    y = min(max(normalized_bb.ymin, 0), 1)
+    w = min(max(normalized_bb.width  + x, 0), 1) - x
+    h = min(max(normalized_bb.height + y, 0), 1) - y
+     
+    return x, y, w, h
+
+def detect_faces(face_det, img):
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    results = face_det.process(img)
+    dets = results.detections or []
+    if len(dets) == 0:
+        return []
+
+    bboxes = [get_bbox(det) for det in dets]
+    return bboxes
+
+def write_yolo_txt(im_boxes, im_file):
+    bb_filename = im_file.replace(".jpg", ".txt")
+    f_bb = open(bb_filename, "w+")
+
+    for box in im_boxes:
+        x, y, w, h = box
+        
+        xC = x + w * 0.5
+        yC = y + h * 0.5
+        yolo_box = [xC, yC, w, h]
+
+        row = "0 " + " ".join([str(x) for x in yolo_box])
+        f_bb.write(row + "\n")
+
+    f_bb.close()
+
+
+def write_detections(folder):
+    face_det = mp_face_detection.FaceDetection(model_selection=0, min_detection_confidence=0.5)
+    im_files = [x for x in glob(f"{folder}/*.jpg") if x.endswith(".jpg")]
+
+    for im_file in track(im_files, "Detecting faces..."):
+        im = cv2.imread(im_file)
+
+        bboxes = detect_faces(face_det, im)
+        if len(bboxes) == 0:
+            continue
+
+        write_yolo_txt(bboxes, im_file)
+       
+def create_train_test_folders(test_portion = 0.1):
+    print("Creating train & val")
+
+    im_files = [x for x in glob(f"{script_dir}/**/*.jpg", recursive=True) if x.endswith(".jpg")]
+    train_count = int(len(im_files) * (1 - test_portion))
     
-    while True:
-        im_file = f.readline().strip('\n')
-        if len(im_file) == 0:
-            break
-        
-        n_boxes = int(f.readline().strip('\n'))
-        if n_boxes == 0:
-            f.readline() #read empty bbox
-            continue
-        
-        boxes = []
-        for i in range(n_boxes):
-            record = f.readline().strip('\n').split(" ")[:4]
-            box    = [int(x) for x in record]
-            boxes.append(box)
-            
-        data[im_file] = boxes    
-        
-    f.close()
-    return data
-        
-def write_data(im_boxes, im_base_folder):
-    for im_file, boxes in track(im_boxes.items()):
+    i = 0
+    os.makedirs(f"{script_dir}/train/", exist_ok=True)
+    for train_file in im_files[:train_count]:
+        shutil.copy(train_file, f"{script_dir}/train/img-{i}.jpg")
+        i += 1
 
-        #convert to yolo boxes
-        imH, imW, _ = cv2.imread(os.path.join(im_base_folder, im_file)).shape
-        yolo_boxes = []
-        
-        for box in boxes:
-            x, y, w, h = box
-            if (w / imW) < 0.2 or (h / imH) < 0.2:
-                continue
-            
-            x, y, w, h = x / imW, y / imH, w / imW, h / imH  
-            xC = x + w * 0.5
-            yC = y + h * 0.5
-            
-            yolo_boxes.append([xC, yC, w, h])
+    i = 0
+    os.makedirs(f"{script_dir}/val/", exist_ok=True)
+    for train_file in im_files[train_count:]:
+        shutil.copy(train_file, f"{script_dir}/val/img-{i}.jpg")
+        i += 1    
 
-        
-        #write to file
-        im_folder = os.path.join(im_base_folder, os.path.dirname(im_file))
-        bb_file   = os.path.basename(im_file).replace(".jpg", ".txt")
+def cleanup():
+    print("Cleaning up")
 
-        if len(yolo_boxes) == 0:
-            continue
-        
-        f_bb = open(os.path.join(im_folder, bb_file), "w+")
-        
-        for box in yolo_boxes:
-            row = "0 " + " ".join([str(x) for x in box])
-            f_bb.write(row + "\n")
-        
-        f_bb.close() 
-        
-        
-def main(txt_file, im_base_folder):
-    im_boxes = read_file(txt_file)
-    write_data(im_boxes, im_base_folder)
+    os.remove(f"{script_dir}/readme.txt")
+    os.remove(f"{script_dir}/testing.txt")
+    os.remove(f"{script_dir}/training.txt")  
 
+    shutil.rmtree(f"{script_dir}/AFLW/", ignore_errors=True)
+    shutil.rmtree(f"{script_dir}/lfw_5590/", ignore_errors=True)  
+    shutil.rmtree(f"{script_dir}/net_7876/", ignore_errors=True)  
 
 if __name__ == "__main__":
-    main(f"{script_dir}/train.txt", f"{script_dir}/train/")
-    main(f"{script_dir}/val.txt",   f"{script_dir}/val/")
+    #create_train_test_folders()
+
+    write_detections(f"{script_dir}/train/")
+    write_detections(f"{script_dir}/val/")
+
+    #cleanup()

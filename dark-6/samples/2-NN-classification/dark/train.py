@@ -1,8 +1,10 @@
 import numpy as np
+import dark.tensor as dt
 import dark.nn as nn
 from dark.optim import *
 from dark.utils.transforms import *
 from config import *
+from rich.progress import track
 from model import MyNN, get_net
 from dataset import get_loaders
 from util import save_samples
@@ -12,7 +14,9 @@ def train_loop(dataloader, model, loss_fn, optimizer):
     size = len(dataloader.dataset)
     correct = 0.0
 
-    for batchIdx, (X, y) in enumerate(dataloader):
+    for batchIdx, (X, y) in enumerate(track(dataloader, "Training...")):
+        X, y = dt.asarray(X), dt.asarray(y)
+
         pred = model(X)
         loss = loss_fn(pred, y)
 
@@ -20,10 +24,10 @@ def train_loop(dataloader, model, loss_fn, optimizer):
         loss.backward()
         optimizer.step()
         
-        correct += (pred.value.argmax(1) == y.argmax(1)).astype(np.float32).sum().item()
+        correct += (pred.data.argmax(1) == y.argmax(1)).astype(dt.float32).sum().item()
 
         if batchIdx % 100 == 0:
-            loss, current = loss.value.item(), batchIdx * len(X)
+            loss, current = loss.data.item(), batchIdx * len(X)
             print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
 
     correct /= size
@@ -35,10 +39,12 @@ def test_loop(dataloader, model, loss_fn, epoch):
     num_batches = len(dataloader)
     test_loss, correct = 0, 0
 
-    for X, y in dataloader:
+    for X, y in track(dataloader, "Testing... "):
+        X, y = dt.asarray(X), dt.asarray(y)
+
         pred = model(X)
-        test_loss += loss_fn(pred, y).value.item()
-        correct += (pred.value.argmax(1) == y.argmax(1)).astype(np.float32).sum().item()
+        test_loss += loss_fn(pred, y).data.item()
+        correct += (pred.data.argmax(1) == y.argmax(1)).astype(dt.float32).sum().item()
 
     test_loss /= num_batches
     correct /= size

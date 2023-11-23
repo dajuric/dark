@@ -10,7 +10,7 @@ model_path = f"{script_dir}/model.pth"
 IM_SIZE = 96
 KEYPOINT_COUNT = 68 * 2
 BATCH_SIZE = 64
-EPOCHS = 10
+EPOCHS = 15
 
 
 tr_im_transforms = T.Compose(   

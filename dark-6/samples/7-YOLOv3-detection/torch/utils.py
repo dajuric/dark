@@ -92,27 +92,38 @@ def plot_boxes(im, boxes):
         color = colors[int(lbl)].numpy().tolist()
         cv2.rectangle(im, (x, y), (x + w, y + h), color, 3)
 
-def save_detection_samples(model, dataset, sAnchors, indices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]):
+def save_detection_samples(dataset, model, sAnchors, filename, grid = (3, 5)):
     sAnchors = sAnchors.cpu()
+    h, w = grid
+    i = 0
 
-    for i in indices:
-        im, _ = dataset[i]
-        im = im.to(device)
+    image_rows = []
+    for r in range(h):
+        
+        image_row = []
+        for c in range(w):
+            im, _ = dataset[i]
 
-        pred = model(im.unsqueeze(0))
-        pred = [x.cpu() for x in pred]
+            pred = model(im.unsqueeze(0).to(device))
+            pred = [x.cpu() for x in pred]
+            
+            im = ((im + 0) * 255).type(torch.uint8)
+            im = torch.moveaxis(im, 0, 2)
+            im = cv2.cvtColor(im.numpy(), cv2.COLOR_RGB2BGR)  
 
-        bboxes = [
+            bboxes = [
                 *cell_to_boxes(pred[0], S[0], sAnchors=sAnchors[0]),
                 *cell_to_boxes(pred[1], S[1], sAnchors=sAnchors[1])
-             ]
-        
-        im = np.rollaxis(im.cpu().numpy().squeeze(), 0, 3)
-        im = ((im + 0) * 255).astype(np.uint8)
-        im = cv2.cvtColor(im, cv2.COLOR_RGB2BGR)
-        
-        plot_boxes(im, bboxes)
-        cv2.imwrite(f"{script_dir}/out-{i}.png", im)
+             ]        
+            plot_boxes(im, bboxes)
+              
+            image_row.append(im)
+            i += 1
+            
+        image_rows.append(np.concatenate(image_row, axis=1))
+    
+    table = np.concatenate(image_rows, axis=0)
+    cv2.imwrite(filename, table)
 
 def track(sequence, desc_func):
     progress = Progress(

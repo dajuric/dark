@@ -22,8 +22,8 @@ class ImageFolder(Dataset):
         self.imgT = imgT
         self.lblT = lblT
 
-        self.img_names = self.get_images(root_folder)
-        self.labels = self.get_labels(self.img_names)
+        self.img_names = self._get_images(root_folder)
+        self.label_indices, self.labels = self._get_labels(self.img_names)
 
     def __len__(self):
         return len(self.img_names)
@@ -31,19 +31,19 @@ class ImageFolder(Dataset):
     def __getitem__(self, index):
         img = cv2.imread(self.img_names[index])
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        lbl = self.labels[index]
+        lbl_idx = self.label_indices[index]
 
         if self.imgT:
             img = self.imgT(img)
         if self.lblT:
-            lbl = self.lblT(lbl)
+            lbl_idx = self.lblT(lbl_idx)
 
-        return img, lbl
+        return img, lbl_idx
 
     def class_count(self):
-        return len(set(self.labels))
+        return len(self.labels)
 
-    def get_labels(self, img_names):
+    def _get_labels(self, img_names):
         labels = []
         distinctLabels = []  #distinct labels by the order of arrival
 
@@ -54,9 +54,9 @@ class ImageFolder(Dataset):
 
             labels.append(distinctLabels.index(imFolder))   
 
-        return labels
+        return labels, distinctLabels
     
-    def get_images(self, root_folder):
+    def _get_images(self, root_folder):
         img_names = []
         
         for ext in [".jpg", ".png", ".bmp"]:

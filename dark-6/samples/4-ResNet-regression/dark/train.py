@@ -10,7 +10,7 @@ def train_loop(train_loader, model, criterion, optimizer):
     train_loss = 0.0
     model.train()
 
-    for batchIdx, data in enumerate(track(train_loader, "Training")):
+    for batchIdx, data in enumerate(track(train_loader, "Training...")):
         ims, kps = data
 
         predicted_kps = model(ims)
@@ -22,10 +22,6 @@ def train_loop(train_loader, model, criterion, optimizer):
 
         train_loss += loss.data.item()
         
-        if batchIdx % 10 == 0:
-            loss, current = loss.data.item(), batchIdx * len(ims)
-            print(f"loss: {(loss * 100):>7f}  [{current:>5d}/{len(train_loader.dataset):>5d}]")
-
     train_loss = train_loss / len(train_loader)
     print(f"Train: loss: {(train_loss * 100):>0.2f}") 
     
@@ -36,7 +32,7 @@ def test_loop(val_loader, model, criterion, epoch):
     val_loss = 0.0
     model.eval()
 
-    for data in track(val_loader, "Testing"):
+    for data in track(val_loader, "Testing... "):
         ims, kps = data
 
         predicted_kps = model(ims)

@@ -54,7 +54,7 @@ def get_net():
         net = torch.load(model_path) 
     else:
         net = Resnet9(CLASS_COUNT)
-        net = net.cuda()
+        net = net.to(device)
 
     return net
 
@@ -62,6 +62,6 @@ def get_net():
 if __name__ == "__main__":
     model = Resnet9()
     
-    im = torch.rand((1, 3, 32, 32))
+    im = torch.rand((4, 3, 32, 32))
     result = model(im)
     print(result.data.shape)

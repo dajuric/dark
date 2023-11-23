@@ -25,10 +25,10 @@ def get_loaders():
         ToTensorV2()
     )
 
-    trSet = ImageFolder("samples/db-FashionMNIST/train/", trTransforms, label_transform)
+    trSet = ImageFolder(f"{script_dir}/../db/train/", trTransforms, label_transform)
     trLoader = DataLoader(trSet, BATCH_SIZE, shuffle=True)
 
-    teSet = ImageFolder("samples/db-FashionMNIST/test/", teTransforms, label_transform)
+    teSet = ImageFolder(f"{script_dir}/../db/test/", teTransforms, label_transform)
     teLoader = DataLoader(teSet, BATCH_SIZE)
 
     return trLoader, teLoader

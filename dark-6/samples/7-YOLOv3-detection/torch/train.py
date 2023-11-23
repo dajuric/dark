@@ -34,7 +34,7 @@ def train_loop(dLoader: DataLoader, model: YoloNet, loss_fn: YoloLoss, optimizer
 
 
 @torch.no_grad()
-def test_loop(dLoader: DataLoader, model: YoloNet, loss_fn: YoloLoss):
+def test_loop(dLoader: DataLoader, model: YoloNet, loss_fn: YoloLoss, epoch: int):
     model.eval()
 
     losses = []
@@ -52,7 +52,7 @@ def test_loop(dLoader: DataLoader, model: YoloNet, loss_fn: YoloLoss):
         losses.append(loss.item())
         mean_loss = sum(losses) / len(losses)
 
-    save_detection_samples(model, dLoader.dataset, sAnchors)
+    save_detection_samples(dLoader.dataset, model, sAnchors, f"{script_dir}/results-{epoch}.jpg")
     return mean_loss
 
 def main():
@@ -70,7 +70,7 @@ def main():
         print(f"\n-----Epoch: {epoch}-----")
 
         train_loop(trLoader, model, loss_fn, optimizer)
-        test_loss = test_loop(teLoader, model, loss_fn)
+        test_loss = test_loop(teLoader, model, loss_fn, epoch)
         scheduler.step(test_loss)
 
         if test_loss < min_test_loss:

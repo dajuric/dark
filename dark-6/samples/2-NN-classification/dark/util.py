@@ -2,9 +2,9 @@ import numpy as np
 import cv2
 import dark.tensor as dt
 
-def _draw_label(im, prediction):
-    txt = str(prediction)
-    cv2.putText(im, txt, (5, 5), cv2.FONT_HERSHEY_SIMPLEX , 1, (255, 0, 0), 2)
+def _draw_label(im, correct):
+    color = (0, 255, 0) if correct == 1 else (0, 0, 255)
+    cv2.circle(im, (25, 25), 5, color, -1)
 
 def save_samples(dataset, model, filename, grid = (3, 5)):
     h, w = grid
@@ -21,8 +21,10 @@ def save_samples(dataset, model, filename, grid = (3, 5)):
             im = (im * 127 + 127).astype(np.uint8)
             im = cv2.cvtColor(np.moveaxis(im, 0, 2), cv2.COLOR_GRAY2BGR)
             im = np.ascontiguousarray(im)
+            im = cv2.resize(im, (64, 64))
 
-            _draw_label(im, np.argmax(prediction))
+            is_correct = np.argmax(prediction) == np.argmax(target)
+            _draw_label(im, is_correct)
 
             image_row.append(im)
             i += 1

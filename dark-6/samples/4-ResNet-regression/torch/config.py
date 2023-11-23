@@ -10,4 +10,4 @@ model_path = f"{script_dir}/model.pth"
 IM_SIZE = 96
 KEYPOINT_COUNT = 68 * 2
 BATCH_SIZE = 64
-EPOCHS = 20
+EPOCHS = 15

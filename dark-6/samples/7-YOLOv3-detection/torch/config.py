@@ -25,7 +25,7 @@ S = [IM_SIZE // 32, IM_SIZE // 16]
 BATCH_SIZE = 64
 LEARNING_RATE = 1e-3
 WEIGHT_DECAY = 1e-2
-NUM_EPOCHS = 100
+NUM_EPOCHS = 15
 
 torch.manual_seed(0)
 device = "cuda" if torch.cuda.is_available() else "cpu"

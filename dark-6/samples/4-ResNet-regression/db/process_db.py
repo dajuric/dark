@@ -30,10 +30,10 @@ def get_bbox(det, im_shape, enlarge_bbox = 0.1):
     imH, imW, _ = im_shape
 
     normalized_bb = det.location_data.relative_bounding_box
-    x = int(min(max(normalized_bb.xmin   * imW, 0), imW))
-    y = int(min(max(normalized_bb.ymin   * imH, 0), imH)) 
-    w = int(min(max(normalized_bb.width  * imW + x, 0) - x, imW)) 
-    h = int(min(max(normalized_bb.height * imH + y, 0) - y, imH))
+    x = normalized_bb.xmin   * imW
+    y = normalized_bb.ymin   * imH 
+    w = normalized_bb.width  * imW 
+    h = normalized_bb.height * imH 
 
     #enlarge bbox
     x -= int(w * enlarge_bbox); w += int(w * enlarge_bbox) * 2

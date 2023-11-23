@@ -6,7 +6,7 @@ import numpy as np
 
 script_dir = os.path.dirname(os.path.realpath(__file__))
 
-DB_PATH = f"{script_dir}/../db/TCDCN/"
+DB_PATH = f"{script_dir}/../db/"
 MODEL_PATH = f"{script_dir}/model.pt"
 C = 1
 TEST_SIZE = 0.1
@@ -24,7 +24,7 @@ S = [IM_SIZE // 32, IM_SIZE // 16]
 
 BATCH_SIZE = 64
 LEARNING_RATE = 1e-3
-NUM_EPOCHS = 50
+NUM_EPOCHS = 15
 
 print(f"Running on: {'cuda' if dt.is_cuda() else 'cpu'}")
 

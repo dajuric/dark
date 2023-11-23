@@ -1,4 +1,3 @@
-import pickle
 import numpy as np
 import cv2
 import glob
@@ -31,7 +30,7 @@ def show_sample(im):
     plt.show()
 
 def main():
-    net = pickle.load(open(model_path, "rb"))
+    net = torch.load(model_path)
     im = get_random_sample()
     print(classify_sample(net, im))
     show_sample(im)

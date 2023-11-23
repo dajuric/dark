@@ -84,8 +84,8 @@ class YoloDataset(Dataset):
         return np.array(ious)
     
 def get_dataloaders():
-    dbTrain = YoloDataset(f"{DB_PATH}/", train_transforms)
-    dbTest  = YoloDataset(f"{DB_PATH}/", test_transforms) 
+    dbTrain = YoloDataset(f"{DB_PATH}/train/", train_transforms)
+    dbTest  = YoloDataset(f"{DB_PATH}/val/", test_transforms) 
 
     trainLoader = DataLoader(dbTrain, BATCH_SIZE, shuffle=True)
     testLoader  = DataLoader(dbTest,  BATCH_SIZE, shuffle=False)
