@@ -1,4 +1,4 @@
-import pickle
+import dark
 import dark.nn as nn
 from dark.optim import *
 from rich.progress import track
@@ -57,7 +57,7 @@ def main():
            min_test_loss = test_loss
 
            print(f"Saving best model\n\n")
-           pickle.dump(model, open(model_path, "wb"))
+           dark.save(model, model_path)
 
     print("Done!")
 

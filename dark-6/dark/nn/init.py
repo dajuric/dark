@@ -1,5 +1,5 @@
 import dark.tensor as dt
-from dark.nn import module
+import dark.nn as nn
 from dark import *
 
 def _calc_in_out_dims(t_shape):
@@ -31,11 +31,11 @@ def random_uniform_(tensor, a, b):
 
 
 def default_init_weights(m):
-    if isinstance(m, module.Conv2d) or isinstance(m, module.ConvTranspose2d):
+    if isinstance(m, nn.Conv2d) or isinstance(m, nn.ConvTranspose2d):
         xavier_uniform_(m.weights)
         xavier_uniform_(m.bias)
 
-    if isinstance(m, module.Linear):
+    if isinstance(m, nn.Linear):
         stdv = 1. / dt.sqrt(m.weights.data.shape[1])
         random_uniform_(m.weights, -stdv, stdv)
         random_uniform_(m.bias, -stdv, stdv)

@@ -2,7 +2,6 @@ import dark
 import dark.nn as nn
 import dark.tensor as dt
 from dark.nn.init import default_init_weights
-import pickle
 from config import *
 
 class ConvBlock(nn.Module):
@@ -54,7 +53,7 @@ class Resnet9(nn.Module):
 def get_net():
     net = None
     if os.path.exists(model_path):
-        net = pickle.load(open(model_path, "rb")) 
+        net = dark.load(model_path)
     else:
         net = Resnet9(CLASS_COUNT)
         net.apply(default_init_weights)

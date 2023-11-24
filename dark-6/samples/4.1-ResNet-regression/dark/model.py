@@ -89,7 +89,7 @@ class Resnet18(nn.Module):
 def get_net():
     net = None
     if os.path.exists(model_path):
-        net = pickle.load(open(model_path, "rb")) 
+        net = dark.load(model_path)
     else:
         net = Resnet18(out_dim=KEYPOINT_COUNT)
         net.apply(default_init_weights)

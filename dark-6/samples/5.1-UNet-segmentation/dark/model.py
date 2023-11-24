@@ -3,7 +3,6 @@ import dark.nn as nn
 from dark.nn.init import default_init_weights
 import os
 from config import *
-import pickle
 
 # adopted from: https://medium.com/analytics-vidhya/creating-a-very-simple-u-net-model-with-pytorch-for-semantic-segmentation-of-satellite-images-223aa216e705
 class UNet(nn.Module):
@@ -69,7 +68,7 @@ class UNet(nn.Module):
 def get_net():
     net = None
     if os.path.exists(model_path):
-        net = pickle.load(open(model_path, "rb")) 
+        net = dark.load(model_path)
     else:
         net = UNet(3, 1)
         net.apply(default_init_weights)

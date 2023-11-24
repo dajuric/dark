@@ -1,6 +1,6 @@
+import dark
 from dark.nn import *
 import os
-import pickle
 from util import init_weights
 from config import *
 
@@ -40,7 +40,7 @@ class Discriminator(Module):
 def get_netD():
     net = None
     if os.path.exists(modelD_path):
-        net = pickle.load(open(modelD_path, "rb")) 
+        net = dark.load(modelD_path)
     else:
         net = Discriminator(64, 3)
         net.apply(init_weights)

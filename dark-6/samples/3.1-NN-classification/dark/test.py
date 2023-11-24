@@ -1,8 +1,8 @@
-import pickle
 import numpy as np
 import cv2
 import glob
 import matplotlib.pyplot as plt
+import dark
 from model import MyNNBlock, MyNN #for deserialization
 from config import *
 
@@ -31,12 +31,11 @@ def show_sample(im):
     plt.show()
 
 def main():
-    net = pickle.load(open(model_path, "rb"))
+    net = dark.load(model_path)
     im = get_random_sample()
     print(classify_sample(net, im))
     show_sample(im)
 
 
 if __name__ == "__main__":
-    np.seterr(over='raise')
     main()

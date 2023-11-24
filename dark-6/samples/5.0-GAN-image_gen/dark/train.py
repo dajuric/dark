@@ -8,7 +8,6 @@ from modelD import Discriminator, get_netD
 from modelG import Generator, get_netG
 from dataset import get_loader
 from util import save_samples
-import pickle
 from rich.progress import track
 from config import *
 
@@ -87,5 +86,5 @@ for e in range(EPOCHS):
     train_loop(netD, netG, data_loader, criterion, optimizerD, optimizerG)
     test_loop(netG, fixed_noise, e)
 
-    pickle.dump(netD, open(modelD_path, "wb"))
-    pickle.dump(netG, open(modelG_path, "wb"))
+    dark.save(netD, modelD_path)
+    dark.save(netG, modelG_path)

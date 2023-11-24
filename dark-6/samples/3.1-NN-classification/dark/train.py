@@ -1,5 +1,6 @@
 import numpy as np
 import dark.tensor as dt
+import dark
 import dark.nn as nn
 from dark.optim import *
 from dark.utils.transforms import *
@@ -70,10 +71,9 @@ def main():
             min_test_loss = test_loss
 
             print(f"Saving best model\n\n")
-            #pickle.dump(model, open(model_path, "wb"))
+            dark.save(model, model_path)
 
     print("Done!")
 
 if __name__ == "__main__":
-    np.seterr(over='raise')
     main()

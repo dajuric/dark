@@ -72,5 +72,3 @@ class Normalize(PointTransform):
         
         n_pts = pts / np.array([w, h])
         return n_pts, im_shape
-    
-       

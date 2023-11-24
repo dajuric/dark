@@ -130,7 +130,7 @@ def track(sequence, desc_func):
         TextColumn("[progress.description]{task.description}"),
         BarColumn(),
         TaskProgressColumn(show_speed=True),
-        TimeRemainingColumn(),
+        TimeRemainingColumn(elapsed_when_finished=True),
     )
 
     with progress:

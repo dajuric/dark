@@ -1,7 +1,6 @@
 import dark
 from dark.nn import *
 import os
-import pickle
 from util import init_weights
 from config import *
 
@@ -45,7 +44,7 @@ class Generator(Module):
 def get_netG():
     net = None
     if os.path.exists(modelG_path):
-        net = pickle.load(open(modelG_path, "rb")) 
+        net = dark.load(modelG_path)
     else:
         net = Generator(nz, 64, 3)
         net.apply(init_weights)

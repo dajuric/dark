@@ -1,4 +1,5 @@
 from rich.progress import track
+import dark
 import dark.nn as nn
 import dark.optim as optim
 from model import Resnet18, get_net
@@ -63,7 +64,7 @@ def main():
             min_test_loss = test_loss
 
             print(f"Saving best model")
-            #pickle.dump(model, open(model_path, "wb"))
+            dark.save(model, model_path)
 
     print("Done!")
 

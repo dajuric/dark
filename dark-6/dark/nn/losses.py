@@ -1,5 +1,6 @@
 import dark
-from .module import Module, Sigmoid, Softmax
+from .module import Module
+from .modules import Sigmoid, Softmax
 
 class MSELoss(Module):
     def __init__(self):

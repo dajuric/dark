@@ -1,5 +1,6 @@
 import dark
 import dark.nn as nn
+from dark.nn.init import default_init_weights
 from config import *
 
 # https://github.com/deepcam-cn/yolov5-face/blob/master/models/common.py
@@ -123,14 +124,15 @@ class BlazeFace(nn.Module):
         return preds
     
     def initialize(module):
+        default_init_weights(module)
+
         if isinstance(module, nn.Conv2d):
-            nn.init.xavier_uniform_(module.weights) #nn.init.kaiming_normal_(module.weight.data)
+            nn.init.xavier_uniform_(module.weights)
             module.bias.data[:] = 0
 
 
 if __name__ == "__main__":
     import dark.tensor as dt
-    import pickle
 
     model = BlazeFace()
     x = dt.random.randn(*(8, 3, 128, 128))
@@ -139,5 +141,3 @@ if __name__ == "__main__":
     assert out[0].data.shape == (8, 3, S[0], S[0], C + 5)
     assert out[1].data.shape == (8, 3, S[1], S[1], C + 5)
     print("Success!")
-    
-    pickle.dump(model, open("model.pth", "wb"))

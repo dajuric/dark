@@ -1,7 +1,7 @@
+import dark
 import dark.tensor as dt
 from model import Resnet18
 import numpy as np
-import pickle
 
 import os
 import cv2
@@ -66,7 +66,7 @@ def detect_face(face_det, img):
     return bbox
 
 def main():
-    net = pickle.load(open(model_path, "rb")) 
+    net = dark.load(model_path)
     net.eval()
     
     face_det = mp_face_detection.FaceDetection(model_selection=0, min_detection_confidence=0.5)

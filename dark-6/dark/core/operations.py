@@ -2,6 +2,7 @@ from .autodiff import Operation
 from .utils import *
 import dark.tensor as dt
 
+# ------ scalar ------
 class AbsoluteValue(Operation):
 
     def forward(self, x):
@@ -19,6 +20,25 @@ class Add(Operation):
 
     def backward(self, dldy, y, a, b):
         return reduce_sum(dldy, a.shape), reduce_sum(dldy, b.shape)
+
+class Subtract(Operation):
+
+    def forward(self, a, b):
+        return a - b
+
+    def backward(self, dldy, y, a, b):
+        return reduce_sum(dldy, a.shape), reduce_sum(-dldy, b.shape)
+
+class Mul(Operation):
+
+    def forward(self, a, b):
+        return a * b
+
+    def backward(self, dldy, y, a, b):
+        dlda = dldy * b
+        dldb = dldy * a
+
+        return reduce_sum(dlda, a.shape), reduce_sum(dldb, b.shape)
 
 class Divide(Operation):
 
@@ -55,27 +75,6 @@ class Tanh(Operation):
     def backward(self, dldy, y, x):
         return [dldy * (1 - y * y)]
 
-class MatMul(Operation):
-
-    def forward(self, a, b):
-        y = dt.matmul(a, b)
-        return y
-
-    def backward(self, dldy, y, a, b):
-        dlda = dt.matmul(dldy, b.T)
-        dldb = dt.matmul(a.T, dldy)
-        return dlda, dldb
-    
-class Transpose(Operation):
-
-    def forward(self, x):
-        y = dt.transpose(x)
-        return y
-
-    def backward(self, dldy, y, x):
-        o = dt.transpose(dldy)
-        return [o]
-
 class Max(Operation):
 
     def forward(self, a, b):
@@ -88,6 +87,128 @@ class Max(Operation):
         
         return dlda, dldb
 
+class Min(Operation):
+
+    def forward(self, a, b):
+        return dt.minimum(a, b)
+
+    def backward(self, dldy, y, a, b):
+        c = a < b
+        dlda = dldy * c
+        dldb = dldy * dt.logical_not(c)
+        return dlda, dldb
+
+class Pow(Operation):
+
+    def forward(self, x, n):
+        return dt.power(x, n)
+
+    def backward(self, dldy, y, x, n):
+        return [n * dt.power(x, n - 1) * dldy]
+
+class SquareRoot(Operation):
+
+    def forward(self, x):
+        return dt.sqrt(x)
+
+    def backward(self, dldy, y, x):
+        return [.5 * dldy / y]
+
+
+# ------ transformation & logical ------
+class View(Operation):
+
+    def forward(self, x, **kwargs):
+        outShape = kwargs["shape"]
+        return dt.reshape(x, outShape)
+
+    def backward(self, dldy, y, x):
+        origShape = x.shape
+        return [dt.reshape(dldy, origShape)]
+
+class Transpose(Operation):
+
+    def forward(self, x):
+        y = dt.transpose(x)
+        return y
+
+    def backward(self, dldy, y, x):
+        o = dt.transpose(dldy)
+        return [o]
+
+class Cat(Operation):
+
+    def forward(self, *inputs, **kwargs):
+        self.dim = kwargs['dim']
+        return dt.concatenate(inputs, self.dim)
+
+    def backward(self, dldy, y, *inputs):
+        indices = [x.shape[self.dim] for x in inputs]
+        indices = dt.cumsum(dt.array(indices))
+        indices = [int(x) for x in indices]
+
+        result = dt.split(dldy, indices[:-1], axis=self.dim)
+        return result  
+
+class Slice(Operation):
+
+    def forward(self, input, **kwargs):
+        self.dims = kwargs["dim"]
+        out = input[self.dims]
+
+        return out
+    
+    def backward(self, grad, out, input):
+        dldy = dt.zeros(input.shape)
+        dldy[self.dims] = grad
+
+        return [dldy]
+    
+class Mask(Operation):
+
+    def forward(self, input, **kwargs):
+        self.mask = kwargs["mask"]
+        assert self.mask.shape == input.shape
+        
+        out = input[self.mask]
+        out = dt.expand_dims(out, 0)
+        return out
+    
+    def backward(self, grad, out, input):
+        dldy = dt.zeros(input.shape)
+        dldy[self.mask] = grad
+
+        return [dldy]
+    
+class Reshape(Operation):
+
+    def forward(self, input, **kwargs):
+        self.out_shape = kwargs["shape"]  
+        out = input.reshape(self.out_shape)
+
+        return out
+    
+    def backward(self, grad, out, input):
+        dldy = grad.reshape(input.shape)
+
+        return [dldy]
+    
+class MoveAxis(Operation):
+
+    def forward(self, input, **kwargs):
+        self.src_dim = kwargs["source"]
+        self.tgt_dim = kwargs["destination"]
+
+        out = dt.moveaxis(input, self.src_dim, self.tgt_dim)
+        return out
+    
+    def backward(self, grad, out, input):
+        dldy = dt.moveaxis(grad, self.tgt_dim, self.src_dim)
+
+        return [dldy]
+    
+
+# ------ matrix-reduction ------
 class Mean(Operation):
 
     def forward(self, x, **kwargs):
@@ -111,44 +232,6 @@ class Var(Operation):
         m = dt.mean(x, self.dim, keepdims=True)
         return [dldy * 2 * (x - m) / norm]
 
-class Min(Operation):
-
-    def forward(self, a, b):
-        return dt.minimum(a, b)
-
-    def backward(self, dldy, y, a, b):
-        c = a < b
-        dlda = dldy * c
-        dldb = dldy * dt.logical_not(c)
-        return dlda, dldb
-
-class Mul(Operation):
-
-    def forward(self, a, b):
-        return a * b
-
-    def backward(self, dldy, y, a, b):
-        dlda = dldy * b
-        dldb = dldy * a
-
-        return reduce_sum(dlda, a.shape), reduce_sum(dldb, b.shape)
-
-class Pow(Operation):
-
-    def forward(self, x, n):
-        return dt.power(x, n)
-
-    def backward(self, dldy, y, x, n):
-        return [n * dt.power(x, n - 1) * dldy]
-
-class Subtract(Operation):
-
-    def forward(self, a, b):
-        return a - b
-
-    def backward(self, dldy, y, a, b):
-        return reduce_sum(dldy, a.shape), reduce_sum(-dldy, b.shape)
-
 class Sum(Operation):
 
     def forward(self, x, **kwargs):
@@ -157,25 +240,19 @@ class Sum(Operation):
     def backward(self, dldy, y, x):
         return [dldy * dt.ones(x.shape)]
 
-class SquareRoot(Operation):
 
-    def forward(self, x):
-        return dt.sqrt(x)
+# ------ matrix ------
+class MatMul(Operation):
 
-    def backward(self, dldy, y, x):
-        return [.5 * dldy / y]
+    def forward(self, a, b):
+        y = dt.matmul(a, b)
+        return y
 
-class View(Operation):
-
-    def forward(self, x, **kwargs):
-        outShape = kwargs["shape"]
-        return dt.reshape(x, outShape)
-
-    def backward(self, dldy, y, x):
-        origShape = x.shape
-        return [dt.reshape(dldy, origShape)]
-
-
+    def backward(self, dldy, y, a, b):
+        dlda = dt.matmul(dldy, b.T)
+        dldb = dt.matmul(a.T, dldy)
+        return dlda, dldb
+    
 # https://hackmd.io/@machine-learning/blog-post-cnnumpy-fast
 # https://stackoverflow.com/questions/34254679/how-can-i-implement-deconvolution-layer-for-a-cnn-in-numpy
 # https://coolgpu.github.io/coolgpu_blog/github/pages/2020/10/04/convolution.html
@@ -250,8 +327,7 @@ class ConvTranspose2d(Operation):
         xe[:, :, ::self.stride, ::self.stride] = x
 
         return xe
-    
-    
+     
 # https://stackoverflow.com/questions/69728373/resize-1-channel-numpy-image-array-with-nearest-neighbour-interpolation
 class Upsample2d(Operation):
     
@@ -281,78 +357,7 @@ class Upsample2d(Operation):
         ratio = 0.5 * in_sz / out_sz
         indices = dt.linspace(ratio - 0.5, in_sz - ratio - 0.5, num=out_sz)
         return dt.around(indices).astype(dt.int32)
-    
-class Cat(Operation):
 
-    def forward(self, *inputs, **kwargs):
-        self.dim = kwargs['dim']
-        return dt.concatenate(inputs, self.dim)
-
-    def backward(self, dldy, y, *inputs):
-        indices = [x.shape[self.dim] for x in inputs]
-        indices = dt.cumsum(dt.array(indices))
-        indices = [int(x) for x in indices]
-
-        result = dt.split(dldy, indices[:-1], axis=self.dim)
-        return result  
-
-class Slice(Operation):
-
-    def forward(self, input, **kwargs):
-        self.dims = kwargs["dim"]
-        out = input[self.dims]
-
-        return out
-    
-    def backward(self, grad, out, input):
-        dldy = dt.zeros(input.shape)
-        dldy[self.dims] = grad
-
-        return [dldy]
-    
-class Mask(Operation):
-
-    def forward(self, input, **kwargs):
-        self.mask = kwargs["mask"]
-        assert self.mask.shape == input.shape
-        
-        out = input[self.mask]
-        out = dt.expand_dims(out, 0)
-        return out
-    
-    def backward(self, grad, out, input):
-        dldy = dt.zeros(input.shape)
-        dldy[self.mask] = grad
-
-        return [dldy]
-    
-class Reshape(Operation):
-
-    def forward(self, input, **kwargs):
-        self.out_shape = kwargs["shape"]  
-        out = input.reshape(self.out_shape)
-
-        return out
-    
-    def backward(self, grad, out, input):
-        dldy = grad.reshape(input.shape)
-
-        return [dldy]
-    
-class MoveAxis(Operation):
-
-    def forward(self, input, **kwargs):
-        self.src_dim = kwargs["source"]
-        self.tgt_dim = kwargs["destination"]
-
-        out = dt.moveaxis(input, self.src_dim, self.tgt_dim)
-        return out
-    
-    def backward(self, grad, out, input):
-        dldy = dt.moveaxis(grad, self.tgt_dim, self.src_dim)
-
-        return [dldy]
-        
 class Dropout(Operation):
     
     def forward(self, x, p):
@@ -370,9 +375,10 @@ class Dropout(Operation):
         if self.p < 1.0:
             result /= (1 - self.p)
             
-        return result
-    
-    
+        return result 
+
+
+
 def abs(x):
     return AbsoluteValue.apply(x)
 

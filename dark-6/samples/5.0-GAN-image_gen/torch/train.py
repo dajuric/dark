@@ -2,12 +2,13 @@ import torch
 from torch.utils.data import DataLoader
 from torch.nn import Module, BCEWithLogitsLoss
 from torch.optim import Optimizer, Adam
+
 from modelD import Discriminator, get_netD
 from modelG import Generator, get_netG
+from dataset import get_loader
 from util import save_samples
 from rich.progress import track
 from config import *
-from dataset import get_loader
 
 
 def trainStepD_real(netD, criterion, real):

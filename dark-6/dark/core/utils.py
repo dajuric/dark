@@ -1,4 +1,5 @@
 import dark.tensor as dt
+import numpy as np
 
 def reduce_sum(result, target_shape):
     dim_diff = result.ndim - len(target_shape)
@@ -13,4 +14,3 @@ def reduce_sum(result, target_shape):
     result = result.sum(dim0 + dim1, keepdims=True)
     result = result.squeeze(dim0)
     return result
-  

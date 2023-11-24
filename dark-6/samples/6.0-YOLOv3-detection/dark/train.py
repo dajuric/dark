@@ -7,7 +7,6 @@ from loss import *
 from utils import *
 from dataset import *
 import os
-import pickle
 
 sAnchors = get_scaled_anchors()
 
@@ -55,7 +54,7 @@ def test_loop(dLoader: DataLoader, model: YoloNet, loss_fn: YoloLoss, epoch: int
 
 def main():
     model = YoloNet()
-    if os.path.exists(MODEL_PATH): model = pickle.load(open(MODEL_PATH, "rb"))
+    if os.path.exists(MODEL_PATH): model = dark.load(MODEL_PATH)
 
     loss_fn = YoloLoss()
     trLoader, teLoader = get_dataloaders()
@@ -69,7 +68,7 @@ def main():
         test_loss = test_loop(teLoader, model, loss_fn, epoch)
 
         if test_loss < min_test_loss:
-            pickle.dump(model, open(MODEL_PATH, "wb"))
+            dark.save(model, MODEL_PATH)
             min_test_loss = test_loss
 
 

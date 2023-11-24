@@ -39,7 +39,7 @@ class MyNN(nn.Module):
 def get_net():
     net = None
     if os.path.exists(model_path):
-        net = pickle.load(open(model_path, "rb")) 
+        net = dark.load(model_path)
     else:
         net = MyNN()
         net.apply(default_init_weights)

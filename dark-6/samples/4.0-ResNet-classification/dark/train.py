@@ -1,3 +1,4 @@
+import dark
 import dark.nn as nn
 from dark.optim import *
 import dark.tensor as dt
@@ -51,6 +52,7 @@ def test_loop(dataloader, model, loss_fn, epoch):
 def main():
     tr_loader, te_loader = get_loaders()
     model = get_net()
+    
     loss_fn = nn.CrossEntropyLoss()
     optimizer = SGD(model.parameters(), lr=1e-3, momentum=0.9)
     min_test_loss = float("inf")
@@ -64,7 +66,7 @@ def main():
             min_test_loss = test_loss
 
             print(f"Saving best model\n\n")
-            #pickle.dump(model, open(model_path, "wb"))
+            dark.save(model, model_path)
 
     print("Done!")
 
