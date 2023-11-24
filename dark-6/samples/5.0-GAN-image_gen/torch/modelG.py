@@ -43,8 +43,8 @@ class Generator(Module):
 
 def get_netG():
     net = None
-    if os.path.exists(modelD_path):
-        net = torch.load(modelD_path) 
+    if os.path.exists(modelG_path):
+        net = torch.load(modelG_path) 
     else:
         net = Generator(nz, 64, 3)
         net.apply(init_weights)

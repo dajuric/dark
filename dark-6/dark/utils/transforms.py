@@ -8,7 +8,7 @@ class Transform():
         pass
 
     def __call__(self, im):
-        raise NotImplemented()
+        raise Exception("Not implemented")
 
 class Compose():
     def __init__(self, *transforms):

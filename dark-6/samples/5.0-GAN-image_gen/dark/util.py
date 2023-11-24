@@ -6,7 +6,7 @@ import cv2
 def init_weights(m):
     default_init_weights(m)
 
-    if isinstance(m, nn.Conv2d):
+    if isinstance(m, nn.Conv2d) or isinstance(m, nn.ConvTranspose2d):
         m.weights.data = dt.random.normal(0.0, 0.02, m.weights.data.shape)
         m.bias.data = dt.zeros_like(m.bias.data)
 
