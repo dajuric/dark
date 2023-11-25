@@ -285,42 +285,23 @@ class ConvTranspose2d(Operation):
 
     def forward(self, x, k, **kwargs):  
         self.padding = kwargs["padding"]
-        self.stride = kwargs["stride"]
-        self.output_padding = kwargs["output_padding"]
+        self.stride = kwargs["stride"]       
+        _, _, kh, kw = k.shape     
            
-        xe = self.dilate(x, self.stride)  
-
-        _, _, kh, kw = k.shape   
-        result = dt.conv2d(xe, k.transpose(1, 0, 2, 3), 1, kh - 1)  
-        result = self.pad(result, xe.shape, k.shape, self.padding, self.output_padding)
+        self.new_x = self.dilate(x, self.stride)  
+        self.new_padding = kh - 1 - self.padding 
+        self.new_k = dt.flip(k, (2, 3)).transpose(1, 0, 2, 3)
+        
+        result = dt.conv2d(self.new_x, self.new_k, 1, self.new_padding)  
         return result
 
     def backward(self, dldy, y, x, k):
-        #pad gradient and convolve w.r.t k
-        dldx = dt.conv2d(dldy, k, self.stride, self.padding)
-                
-        #dilate x, convolve w.r.t dilated x and crop valid part
-        xe = self.dilate(x, self.stride)
-        dldk = dt.conv2d(dldy.transpose((1, 0, 2, 3)), xe.transpose((1, 0, 2, 3)), 1, self.padding) 
-        
-        dldk = self.pad(dldk, dldy.shape, xe.shape, 0, 0)
-        dldk = dt.swapaxes(dldk, 0, 1)
-                
+        dldx, dldk = dt.conv2d_grad(dldy, self.new_x, self.new_k, 1, self.new_padding)  
+        dldx = dldx[:, :, ::self.stride, ::self.stride]
+        dldk = dt.flip(dldk, (2, 3)).transpose(1, 0, 2, 3) 
+            
         return dldx, dldk
-        
-    def pad(self, o, x_shape, k_shape, padding, output_padding):
-        _, _, x_h, x_w = x_shape
-        _, _, o_h, o_w = o.shape
-        _, _, k_h, k_w = k_shape 
-
-        h_valid = x_h - 2 * padding + (k_h - 1) + output_padding
-        w_valid = x_w - 2 * padding + (k_w - 1) + output_padding
-        o = o[..., padding:h_valid+padding, padding:w_valid+padding]
-
-        _, _, o_h, o_w = o.shape
-        o = dt.pad(o, [(0, 0), (0, 0), (0, o_h - o_h), (0, o_w - o_w)])
-        return o
-        
+            
     def dilate(self, x, stride):
         tb, tc, th, tw = x.shape
         xe = dt.zeros((tb, tc, (th - 1) * stride + 1, (tw - 1) * stride + 1))
@@ -442,8 +423,8 @@ def conv2d(s, k, stride = 1, padding = 0):
 def max_pool2d(x, kernel_size = 2, stride = 2):
     return MaxPool2d.apply(x, kernel_size = kernel_size, stride = stride)
 
-def conv_transpose2d(s, k, stride = 1, padding = 0, output_padding = 0):
-    return ConvTranspose2d.apply(s, k, padding = padding, stride = stride, output_padding = output_padding)
+def conv_transpose2d(s, k, stride = 2, padding = 0):
+    return ConvTranspose2d.apply(s, k, padding = padding, stride = stride)
 
 def upsample2d(x, scale_factor = 2):
     return Upsample2d.apply(x, scale_factor = scale_factor)
