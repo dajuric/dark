@@ -231,6 +231,6 @@ The entire source code for this tutorial is available [HERE](https://github.com/
 I hope you have learned something new and stay tuned for the next tutorial where we will extend our framework to work with matrices.
 
 ## References
-[1] https://github.com/a-nico/ArrayFlow
+[1] https://github.com/a-nico/ArrayFlow   
 [2] https://minitorch.github.io/
 
