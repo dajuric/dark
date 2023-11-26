@@ -38,7 +38,7 @@ def test_loop(dataloader, model, loss_fn, epoch):
     test_loss /= num_batches
     print(f"Test: \n  Avg loss: {test_loss:>8f} \n")
 
-    save_samples(dataloader.dataset, model, f"{script_dir}/results-{epoch}.png", 5)
+    save_samples(dataloader.dataset, model, f"{script_dir}/results-{epoch + 1}.png", 5)
     return test_loss
 
 def main():

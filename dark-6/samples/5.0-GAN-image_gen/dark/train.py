@@ -68,7 +68,7 @@ def test_loop(netG: Module, noise, epoch):
     netG.eval()  
     
     fake = netG(noise).detach()
-    save_samples(fake.data, f"{script_dir}/results-{epoch}.png")
+    save_samples(fake.data, f"{script_dir}/results-{epoch + 1}.png")
             
             
 netG = get_netG()

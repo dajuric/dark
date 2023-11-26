@@ -7,5 +7,5 @@ modelD_path = f"{script_dir}/modelD.pickle"
 modelG_path = f"{script_dir}/modelG.pickle"
 
 nz = 100
-BATCH_SIZE = 64
+BATCH_SIZE = 40
 EPOCHS = 15

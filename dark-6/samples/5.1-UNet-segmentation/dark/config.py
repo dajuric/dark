@@ -3,7 +3,7 @@ import dark.tensor as dt
 from dark.utils.transforms import *
 
 IM_SIZE = 64
-BATCH_SIZE = 32
+BATCH_SIZE = 24
 EPOCHS = 3
 
 print(f"Running on: {'cuda' if dt.is_cuda() else 'cpu'}")

@@ -6,9 +6,9 @@ from rich.progress import track
 script_dir = os.path.dirname(os.path.realpath(__file__))
 
 def resize(img_folder):
-    im_files = sorted(glob(f"{img_folder}/*.*"), "Resizing...")
+    im_files = sorted(glob(f"{img_folder}/*.*"))
 
-    for im_file in track(im_files):
+    for im_file in track(im_files, "Resizing..."):
         im = cv2.imread(im_file)
         im = cv2.resize(im, (128, 128))
 

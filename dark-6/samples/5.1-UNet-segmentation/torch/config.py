@@ -4,7 +4,7 @@ import albumentations as A
 import albumentations.pytorch.transforms as AT
 
 IM_SIZE = 64
-BATCH_SIZE = 32
+BATCH_SIZE = 24
 EPOCHS = 3
 
 device = "cuda" if torch.cuda.is_available() else "cpu"

@@ -19,11 +19,12 @@ class BCEWithLogitsLoss(Module):
         self.sigmoid = Sigmoid()
 
     def forward(self, predictions, targets):
+        EPS = 1e-10
         predictions = self.sigmoid(predictions)
 
-        lossA = dark.mul(targets, dark.log(predictions))
-        lossB = dark.mul(dark.subtract(1, targets), dark.log(dark.subtract(1, predictions)))
-
+        lossA = dark.mul(targets, dark.log(dark.add(predictions, EPS)))
+        lossB = dark.mul(dark.subtract(1, targets), dark.log(dark.add(dark.subtract(1, predictions), EPS)))
+        
         loss  = dark.mean(dark.add(lossA, lossB))
         loss  = dark.neg(loss)
         return loss
