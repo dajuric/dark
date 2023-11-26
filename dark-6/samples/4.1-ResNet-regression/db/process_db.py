@@ -43,7 +43,7 @@ def get_bbox(det, im_shape, enlarge_bbox = 0.1):
     x = max(min(x, imW), 0); w = min(w, x + imW)
     y = max(min(y, imH), 0); h = min(h, y + imH)
      
-    return x, y, w, h
+    return int(x), int(y), int(w), int(h)
 
 def detect_face(face_det, img):
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
