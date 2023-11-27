@@ -19,7 +19,7 @@ Through this series of articles, we will build our mini version of PyTorch calle
 
 <table>
     <tr>
-        <td colspan="3" align="center"><b>Dark - 0</b> (this module)</td>
+        <td colspan="3" align="center"><b>Dark - 0</b> <br/>(this module)</td>
     </tr>
     <tr>
         <th>keywords</th>
@@ -232,6 +232,13 @@ b) Finally, we will make out first framework for function minimization which sup
 
 
 ## Function optimization
+
+<img src="docs/blinfolded-man.jpg" width=150px>
+<br/>
+
+[Dreamsite - purchased](https://www.dreamstime.com/poor-confused-blindfolded-businessman-asks-help-vector-illustration-cartoon-blind-man-holding-sign-call-hope-image289980132)
+
+
 Imagine you are on a 1D mountain and you want to go to a walley. You do not see anything because you are blindfolded. How would you do that?
 
 You would step into one direction (e.g. left), and then, if you stepped onto higher ground, you would move in the opposite direction. Notice that even if you stepped onto a lower level you would still require to check the other side (e.g. right) to ensure the steepest path. In other words you would require two evaluations: the left and the right one. 
