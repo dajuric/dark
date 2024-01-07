@@ -1,36 +1,50 @@
-import numpy as np
 from .autodiff import Operation
+import math as m
 
+# ------ scalar ------
 class AbsoluteValue(Operation):
 
-    @staticmethod
-    def _f(x):
-        return np.abs(x)
+    def forward(self, x):
+        return x if x >= 0 else -x
 
-    @staticmethod
-    def _df(dldy, y, x):
+    def backward(self, dldy, y, x):
         gz = (x > 0)
         lz = ~gz
         return [dldy * gz - dldy * lz]
 
 class Add(Operation):
 
-    @staticmethod
-    def _f(a, b):
+    def forward(self, a, b):
         return a + b
 
-    @staticmethod
-    def _df(dldy, y, a, b):
+    def backward(self, dldy, y, a, b):
         return dldy, dldy
+
+class Subtract(Operation):
+
+    def forward(self, a, b):
+        return a - b
+
+    def backward(self, dldy, y, a, b):
+        return dldy, -dldy
+
+class Mul(Operation):
+
+    def forward(self, a, b):
+        return a * b
+
+    def backward(self, dldy, y, a, b):
+        dlda = dldy * b
+        dldb = dldy * a
+
+        return dlda, dldb
 
 class Divide(Operation):
 
-    @staticmethod
-    def _f(a, b):
+    def forward(self, a, b):
         return a / b
 
-    @staticmethod
-    def _df(dldy, y, a, b):
+    def backward(self, dldy, y, a, b):
         dlda = dldy / b
         dldb = -dldy * a / (b ** 2)
 
@@ -38,94 +52,68 @@ class Divide(Operation):
 
 class Exp(Operation):
 
-    @staticmethod
-    def _f(x):
-        return np.exp(x)
+    def forward(self, x):
+        return m.exp(x)
 
-    @staticmethod
-    def _df(dydl, y, x):
+    def backward(self, dydl, y, x):
         return [y * dydl]
 
 class Logarithm(Operation):
 
-    @staticmethod
-    def _f(x):
-        return np.log(x)
+    def forward(self, x):
+        return m.log(x)
 
-    @staticmethod
-    def _df(dldy, y, x):
+    def backward(self, dldy, y, x):
         return [dldy / x]
+    
+class Tanh(Operation):
+    
+    def forward(self, x):
+        return m.tanh(x)
+    
+    def backward(self, dldy, y, x):
+        return [dldy * (1 - y * y)]
 
 class Max(Operation):
 
-    @staticmethod
-    def _f(a, b):
-        return np.maximum(a, b)
+    def forward(self, a, b):
+        return a if a > b else b
 
-    @staticmethod
-    def _df(dldy, y, a, b):
+    def backward(self, dldy, y, a, b):
         c = a > b
         dlda = dldy * c
-        dldb = dldy * ~c
+        dldb = dldy * (~c)
+        
         return dlda, dldb
 
 class Min(Operation):
 
-    @staticmethod
-    def _f(a, b):
-        return np.minimum(a, b)
+    def forward(self, a, b):
+        return a if a < b else b
 
-    @staticmethod
-    def _df(dldy, y, a, b):
+    def backward(self, dldy, y, a, b):
         c = a < b
         dlda = dldy * c
-        dldb = dldy * ~c
-        return dlda, dldb
-
-class Mul(Operation):
-
-    @staticmethod
-    def _f(a, b):
-        return a * b
-
-    @staticmethod
-    def _df(dldy, y, a, b):
-        dlda = dldy * b
-        dldb = dldy * a
-
+        dldb = dldy * (~c)
         return dlda, dldb
 
 class Pow(Operation):
 
-    @staticmethod
-    def _f(x, n):
-        return np.power(x, n)
+    def forward(self, x, n):
+        return m.pow(x, n)
 
-    @staticmethod
-    def _df(dldy, y, x, n):
-        return [n * np.power(x, n - 1) * dldy]
-
-class Subtract(Operation):
-
-    @staticmethod
-    def _f(a, b):
-        return a - b
-
-    @staticmethod
-    def _df(dldy, y, a, b):
-        return +dldy, -dldy
+    def backward(self, dldy, y, x, n):
+        return [n * m.pow(x, n - 1) * dldy]
 
 class SquareRoot(Operation):
 
-    @staticmethod
-    def _f(x):
-        return np.sqrt(x)
+    def forward(self, x):
+        return m.sqrt(x)
 
-    @staticmethod
-    def _df(dldy, y, x):
+    def backward(self, dldy, y, x):
         return [.5 * dldy / y]
 
-
+    
 def abs(x):
     return AbsoluteValue.apply(x)
 
@@ -140,6 +128,9 @@ def exp(x):
 
 def log(x):
     return Logarithm.apply(x)
+
+def tanh(x):
+    return Tanh.apply(x)
 
 def max(a, b):
     return Max.apply(a, b)
@@ -158,3 +149,6 @@ def sqrt(x):
 
 def mul(a, b):
     return Mul.apply(a, b)
+
+def neg(x):
+    return Subtract.apply(0, x)

@@ -1,20 +1,24 @@
-is_training = True
-
 class Node():
     op = None
     inputs = []
 
-    value = None
+    data = None
+    requires_grad = True
     _grad = None
 
     def __init__(self, val):
-        self.value = val
-       
+        self.data = val
+
     def backward(self):
         if self.grad is None:
             self.grad = 1
 
-        self._autodiff()
+        order = self._topological_sort()   
+        for node in order:
+            dldx = node.op.differentiate(node)
+            
+            for k, pd in enumerate(dldx):
+                node.inputs[k].grad = pd
 
     def zero_grad(self):
         if self._grad is not None:
@@ -23,26 +27,40 @@ class Node():
         for node in self.inputs:
             node.zero_grad()
 
-    def _autodiff(self):
-        if self.op is not None:
-            dldx = self.op.differentiate(self)
-            for k, pd in enumerate(dldx):
-                self.inputs[k].grad = pd #set or add
-        
-        for node in self.inputs:
-            node._autodiff()
+    def _topological_sort(self):
+        order = []
+        seen = set()
+
+        def visit(var):
+            if var in seen:
+                return
+            
+            for m in var.inputs:
+                visit(m)
+                        
+            seen.add(var)     
+            if type(var) == Node:
+                order.insert(0, var)
+
+        visit(self)
+        return order
 
     @property
     def grad(self):
         return self._grad
 
     @grad.setter
-    def grad(self, value):
-        self._grad = value 
+    def grad(self, data):
+        if self._grad is None:
+            self._grad = data 
+        else:
+            self._grad += data 
 
     def __repr__(self):
         classname = type(self).__name__
-        return f"({classname}): {self.value}"
+        #opClass = type(self.op).__name__
+        arraystring = round(self.data, 4)
+        return f"({classname}): {arraystring}"
 
 class Constant(Node):
 
@@ -58,44 +76,37 @@ class Parameter(Node):
 
     def __init__(self, val):
         super().__init__(val)
-        self._grad = 0
 
-    @Node.grad.setter
-    def grad(self, value):
-        self._grad += value
 
 class Operation():
 
     @classmethod
-    def apply(op, *inputs, **kwargs):
+    def apply(op_cls, *inputs, **kwargs):
         inputs = list(inputs)
         for k, n in enumerate(inputs):
             if isinstance(n, Node): continue
             inputs[k] = Constant(n)
 
-        x = [n.value for n in inputs]
-        y = op._f(*x, **kwargs)
+        op = op_cls()
+        x = [n.data for n in inputs]
+        y = op.forward(*x, **kwargs)
 
         out_node = Node(y)
-        if is_training:
-            out_node.op = op
-            out_node.inputs = inputs
+        out_node.op = op
+        out_node.inputs = inputs
         
         return out_node
 
-    @classmethod
-    def differentiate(op, node):
+    def differentiate(self, node):
         dldy = node.grad
-        x = [n.value for n in node.inputs]
-        y = node.value
+        x = [n.data for n in node.inputs]
+        y = node.data
 
-        result = op._df(dldy, y, *x)
+        result = self.backward(dldy, y, *x)
         return result
 
-    @staticmethod
-    def _f(x):
+    def forward(self, x):
         raise NotImplementedError()
 
-    @staticmethod
-    def _df(dldy, y, *x):
+    def backward(self, grad, out, *inputs):
         raise NotImplementedError()

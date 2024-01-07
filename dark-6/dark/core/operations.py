@@ -163,23 +163,7 @@ class Slice(Operation):
         dldy[self.dims] = grad
 
         return [dldy]
-    
-class Mask(Operation):
-
-    def forward(self, input, **kwargs):
-        self.mask = kwargs["mask"]
-        assert self.mask.shape == input.shape
         
-        out = input[self.mask]
-        out = dt.expand_dims(out, 0)
-        return out
-    
-    def backward(self, grad, out, input):
-        dldy = dt.zeros(input.shape)
-        dldy[self.mask] = grad
-
-        return [dldy]
-    
 class Reshape(Operation):
 
     def forward(self, input, **kwargs):
@@ -434,9 +418,6 @@ def cat(inputs, dim = 0):
 
 def dropout(x, p=0.2):
     return Dropout.apply(x, p=p)
-
-def mask(x, mask):
-    return Mask.apply(x, mask=mask)
 
 def reshape(x, shape):
     return Reshape.apply(x, shape=shape)

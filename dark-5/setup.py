@@ -3,9 +3,8 @@ from setuptools import setup
 setup(
     name="dark",
     description="",
-    version="0.1",
-    # packages=find_packages(exclude=["test_*"]),
+    version="5.0",
     packages=["dark"],
     package_dir={"dark": "dark"},
-    install_requires = ["numpy", "opencv-python", "numba"]
+    install_requires = []
     )
