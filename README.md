@@ -19,7 +19,7 @@ This tutorial is created to reveal and recreate the internal workings of the fam
     <tbody>
         <tr>
             <td>articles</td>
-            <td>scheduled for 12/01/2024</td>
+            <td><a href="https://medium.com/@darko-juric/mini-pytorch-from-scratch-module-0-d5d58e917351"> Part 0 </a> </td>
         </tr>
         <tr>
             <td>keywords</td>
@@ -41,7 +41,7 @@ This tutorial is created to reveal and recreate the internal workings of the fam
     <tbody>
         <tr>
             <td>articles</td>
-            <td>scheduled for 15/01/2024</td>
+            <td>scheduled for 02/02/2024</td>
         </tr>
         <tr>
             <td>keywords</td>
@@ -69,7 +69,7 @@ This tutorial is created to reveal and recreate the internal workings of the fam
     <tbody>
         <tr>
             <td>articles</td>
-            <td>scheduled for 18/01/2024</td>
+            <td>scheduled for 04/02/2024</td>
         </tr>
         <tr>
             <td>keywords</td>
@@ -96,7 +96,7 @@ This tutorial is created to reveal and recreate the internal workings of the fam
     <tbody>
         <tr>
             <td>articles</td>
-            <td>scheduled for 22/01/2024</td>
+            <td>scheduled for 06/02/2024</td>
         </tr>
         <tr>
             <td>keywords</td>
@@ -123,7 +123,7 @@ This tutorial is created to reveal and recreate the internal workings of the fam
     <tbody>
         <tr>
             <td>articles</td>
-            <td>scheduled for 26/01/2024</td>
+            <td>scheduled for 09/02/2024</td>
         </tr>
         <tr>
             <td>keywords</td>
@@ -150,7 +150,7 @@ This tutorial is created to reveal and recreate the internal workings of the fam
     <tbody>
         <tr>
             <td>articles</td>
-            <td>scheduled for 29/01/2024</td>
+            <td>scheduled for 12/02/2024</td>
         </tr>
         <tr>
             <td>keywords</td>
@@ -178,7 +178,7 @@ This tutorial is created to reveal and recreate the internal workings of the fam
     <tbody>
         <tr>
             <td>articles</td>
-            <td>scheduled for 03/02/2024</td>
+            <td>scheduled for 15/02/2024</td>
         </tr>
         <tr>
             <td>keywords</td>
@@ -206,7 +206,7 @@ This tutorial is created to reveal and recreate the internal workings of the fam
     <tbody>
         <tr>
             <td>articles</td>
-            <td>scheduled for 06/02/2024</td>
+            <td>scheduled for 17/02/2024</td>
         </tr>
         <tr>
             <td>keywords</td>
