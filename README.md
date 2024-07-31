@@ -19,7 +19,7 @@ This tutorial is created to reveal and recreate the internal workings of the fam
     <tbody>
         <tr>
             <td>articles</td>
-            <td><a href="https://medium.com/@darko-juric/mini-pytorch-from-scratch-module-0-d5d58e917351"> All parts </a> </td>
+            <td><a href="https://medium.com/itnext/mini-pytorch-from-scratch-module-0-d5d58e917351"> All parts </a> </td>
         </tr>
         <tr>
             <td>keywords</td>
@@ -42,8 +42,8 @@ This tutorial is created to reveal and recreate the internal workings of the fam
         <tr>
             <td>articles</td>
             <td>
-                <a href="https://medium.com/@darko-juric/mini-pytorch-from-scratch-module-1-part-1-63376eb56bb6"> Part 1 </a> <br/>
-                <a href="https://medium.com/@darko-juric/mini-pytorch-from-scratch-module-1-part-2-2dbad2a2d54e"> Part 2 </a>
+                <a href="https://medium.com/itnext/mini-pytorch-from-scratch-module-1-part-1-63376eb56bb6"> Part 1 </a> <br/>
+                <a href="https://medium.com/itnext/mini-pytorch-from-scratch-module-1-part-2-2dbad2a2d54e"> Part 2 </a>
             </td>
         </tr>
         <tr>
@@ -73,7 +73,7 @@ This tutorial is created to reveal and recreate the internal workings of the fam
         <tr>
             <td>articles</td>
             <td>
-                <a href="https://medium.com/@darko-juric/mini-pytorch-from-scratch-module-2-c6f418f10cbf"> All parts </a> <br/>
+                <a href="https://medium.com/itnext/mini-pytorch-from-scratch-module-2-c6f418f10cbf"> All parts </a> <br/>
             </td>
         </tr>
         <tr>
@@ -101,7 +101,9 @@ This tutorial is created to reveal and recreate the internal workings of the fam
     <tbody>
         <tr>
             <td>articles</td>
-            <td>scheduled for 06/02/2024</td>
+             <td>
+                <a href="https://medium.com/itnext/mini-pytorch-from-scratch-module-3-c91429733b37"> All parts </a> <br/>
+            </td>
         </tr>
         <tr>
             <td>keywords</td>
@@ -128,7 +130,7 @@ This tutorial is created to reveal and recreate the internal workings of the fam
     <tbody>
         <tr>
             <td>articles</td>
-            <td>scheduled for 09/02/2024</td>
+            <td>soon</td>
         </tr>
         <tr>
             <td>keywords</td>
@@ -155,7 +157,7 @@ This tutorial is created to reveal and recreate the internal workings of the fam
     <tbody>
         <tr>
             <td>articles</td>
-            <td>scheduled for 12/02/2024</td>
+            <td>soon</td>
         </tr>
         <tr>
             <td>keywords</td>
@@ -183,7 +185,7 @@ This tutorial is created to reveal and recreate the internal workings of the fam
     <tbody>
         <tr>
             <td>articles</td>
-            <td>scheduled for 15/02/2024</td>
+            <td>soon</td>
         </tr>
         <tr>
             <td>keywords</td>
@@ -211,7 +213,7 @@ This tutorial is created to reveal and recreate the internal workings of the fam
     <tbody>
         <tr>
             <td>articles</td>
-            <td>scheduled for 17/02/2024</td>
+            <td>soon</td>
         </tr>
         <tr>
             <td>keywords</td>
