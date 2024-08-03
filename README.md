@@ -19,8 +19,10 @@ This tutorial is created to reveal and recreate the internal workings of the fam
     <tbody>
         <tr>
             <td>articles</td>
-            <td><a href="https://itnext.io/mini-pytorch-from-scratch-module-0-d5d58e917351"> Introduction </a> </td>
-            <td><a href=""> Gradients-motivation - TODO </a> </td>
+            <td>
+                <a href="https://itnext.io/mini-pytorch-from-scratch-module-0-d5d58e917351"> Introduction </a> <br/>
+                Gradients-motivation - TODO
+            </td> 
         </tr>
         <tr>
             <td>keywords</td>
@@ -43,8 +45,8 @@ This tutorial is created to reveal and recreate the internal workings of the fam
         <tr>
             <td>articles</td>
             <td>
-                <a href="https://itnext.io/mini-pytorch-from-scratch-module-1-part-1-63376eb56bb6"> Auto-diff from Scratch - A Theory Behind </a> <br/>
-                <a href="https://itnext.io/mini-pytorch-from-scratch-module-1-part-2-2dbad2a2d54e"> Auto-diff from Scratch - An Implementation (for scalars) </a>
+                <a href="https://itnext.io/mini-pytorch-from-scratch-module-1-part-1-63376eb56bb6"> Auto-diff from Scratch - A Theory Behind </a> <br/>    
+                <a href="https://itnext.io/mini-pytorch-from-scratch-module-1-part-2-2dbad2a2d54e"> Auto-diff from Scratch - An Implementation (for scalars) </a>    
             </td>
         </tr>
         <tr>
@@ -75,7 +77,7 @@ This tutorial is created to reveal and recreate the internal workings of the fam
             <td>articles</td>
             <td>
                 <a href="https://itnext.io/mini-pytorch-from-scratch-module-2-c6f418f10cbf"> Auto-diff from Scratch - Tensor Support </a> <br/>
-            </td>
+            </td>    
         </tr>
         <tr>
             <td>keywords</td>
@@ -104,7 +106,7 @@ This tutorial is created to reveal and recreate the internal workings of the fam
             <td>articles</td>
              <td>
                 <a href="https://itnext.io/mini-pytorch-from-scratch-module-3-c91429733b37"> Module Class </a> <br/>
-            </td>
+            </td>    
         </tr>
         <tr>
             <td>keywords</td>
@@ -133,7 +135,7 @@ This tutorial is created to reveal and recreate the internal workings of the fam
             <td>articles</td>
             <td>
                 <a href="https://itnext.io/mini-pytorch-from-scratch-module-4-1e0581b92a4d"> Dataset and Data Loaders </a> <br/>
-            </td>
+            </td>    
         </tr>
         <tr>
             <td>keywords</td>
@@ -162,17 +164,9 @@ This tutorial is created to reveal and recreate the internal workings of the fam
             <td>articles</td>
             <td>
                 <a href="https://itnext.io/mini-pytorch-from-scratch-module-5-part-1-0c8e6156d3d3"> 2D Convolution </a> <br/>
-            </td>
-            <td>
                 <a href="https://itnext.io/mini-pytorch-from-scratch-module-5-part-2-aed4a74de9a5"> 2D Pooling </a> <br/>
-            </td>
-            <td>
                 <a href="https://itnext.io/mini-pytorch-from-scratch-module-5-part-3-122aaa2aaf74"> Batch Normalization </a> <br/>
-            </td>
-            <td>
                 <a href="https://itnext.io/mini-pytorch-from-scratch-module-5-part-4-91ddce18cf5a"> Dropout </a> <br/>
-            </td>
-            <td>
                 <a href="https://itnext.io/mini-pytorch-from-scratch-module-5-part-5-b5ee97929b61"> CNN based Sample (classification with ResNet from scratch). </a> <br/>
             </td>
         </tr>
