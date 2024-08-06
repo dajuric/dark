@@ -1,7 +1,7 @@
 # Dark - Let's create mini PyTorch from scratch (tutorial)
 ![Logo](logo.png)
 
-*Have you ever wondered how PyTorch works in depth? If the answer is positive and you have a moderate knowledge of PyTorch (because we are going into depth) - the this tutorial and series of articles is for you.*
+*Have you ever wondered how PyTorch works in depth? If the answer is positive and you have a moderate knowledge of PyTorch (because we are going into depth) - then this tutorial and series of articles is for you.*
 
 We start gently by introducing the concept of derivation, then move on to function optimization. From there, we build our first neural network, followed by convolutional neural networks for classification, regression, segmentation, and image generation. Finally, we conclude with object detection - YOLO.
 
