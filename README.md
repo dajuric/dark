@@ -168,7 +168,7 @@ This tutorial is created to reveal and recreate the internal workings of the fam
                 <a href="https://itnext.io/mini-pytorch-from-scratch-module-5-part-3-122aaa2aaf74"> Batch Normalization </a> <br/>
                 <a href="https://itnext.io/mini-pytorch-from-scratch-module-5-part-4-91ddce18cf5a"> Dropout </a> <br/>
                 <a href="https://itnext.io/mini-pytorch-from-scratch-module-5-part-5-b5ee97929b61"> Sample: CIFAR10 Classification - ResNet </a> <br/>
-                <a href="https://itnext.io/mini-pytorch-from-scratch-module-5-part-5-b5ee97929b61"> Sample: Face Landmark Detection - ResNet </a> <br/>
+                <a href="https://itnext.io/mini-pytorch-from-scratch-module-5-part-6-fb72341f8df4"> Sample: Face Landmark Detection - ResNet </a> <br/>
             </td>
         </tr>
         <tr>
