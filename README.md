@@ -21,7 +21,7 @@ This tutorial is created to reveal and recreate the internal workings of the fam
             <td>articles</td>
             <td>
                 <a href="https://itnext.io/mini-pytorch-from-scratch-module-0-d5d58e917351"> Introduction </a> <br/>
-                Gradients-motivation - TODO
+                <a href="https://itnext.io/mini-pytorch-from-scratch-module-1-part-0-1606b6726233"> Gradients - Motivation </a> <br/>
             </td> 
         </tr>
         <tr>
@@ -167,7 +167,8 @@ This tutorial is created to reveal and recreate the internal workings of the fam
                 <a href="https://itnext.io/mini-pytorch-from-scratch-module-5-part-2-aed4a74de9a5"> 2D Pooling </a> <br/>
                 <a href="https://itnext.io/mini-pytorch-from-scratch-module-5-part-3-122aaa2aaf74"> Batch Normalization </a> <br/>
                 <a href="https://itnext.io/mini-pytorch-from-scratch-module-5-part-4-91ddce18cf5a"> Dropout </a> <br/>
-                <a href="https://itnext.io/mini-pytorch-from-scratch-module-5-part-5-b5ee97929b61"> Sample: ResNet based classification </a> <br/>
+                <a href="https://itnext.io/mini-pytorch-from-scratch-module-5-part-5-b5ee97929b61"> Sample: CIFAR10 Classification - ResNet </a> <br/>
+                <a href="https://itnext.io/mini-pytorch-from-scratch-module-5-part-5-b5ee97929b61"> Sample: Face Landmark Detection - ResNet </a> <br/>
             </td>
         </tr>
         <tr>
@@ -197,9 +198,10 @@ This tutorial is created to reveal and recreate the internal workings of the fam
         <tr>
             <td>articles</td>
             <td>
-                 <a href="https://medium.com/itnext/mini-pytorch-from-scratch-module-6-part-1-84b083598c88"> Transposed 2D Convolution </a> <br/>
-                 <a href="https://medium.com/itnext/mini-pytorch-from-scratch-module-6-part-2-4ec73440e528"> 2D Upsampling </a> <br/>
-                 <a href="https://medium.com/itnext/mini-pytorch-from-scratch-module-6-part-3-493bcdef6077"> Sample: Object Segmentation using UNet </a> <br/>
+                 <a href="https://itnext.io/mini-pytorch-from-scratch-module-6-part-1-84b083598c88"> Transposed 2D Convolution </a> <br/>
+                 <a href="https://itnext.io/mini-pytorch-from-scratch-module-6-part-2-4ec73440e528"> 2D Upsampling </a> <br/>
+                 <a href="https://itnext.io/mini-pytorch-from-scratch-module-6-part-3-493bcdef6077"> Sample: Object Segmentation using UNet </a> <br/>
+                 <a href="https://itnext.io/mini-pytorch-from-scratch-module-6-part-4-70719f4b2c02"> Sample: GAN Anime Generation </a> <br/>
             </td>
         </tr>
         <tr>
@@ -228,7 +230,9 @@ This tutorial is created to reveal and recreate the internal workings of the fam
     <tbody>
         <tr>
             <td>articles</td>
-            <td>soon</td>
+            <td>
+                <a href="https://itnext.io/mini-pytorch-from-scratch-module-7-c7066b46445f"> YOLO Object Detection from Scratch! </a> <br/>
+            </td>
         </tr>
         <tr>
             <td>keywords</td>
