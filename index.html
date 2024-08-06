@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mini PyTorch from Scratch</title>
+  <link rel="stylesheet" href="style.css"/>
+
+  <meta name="description" content="A comprehensive tutorial on how to create a light version of PyTorch from scratch using only NumPy/CuPy.">
+  <meta name="keywords" content="coding tutorials, programming, derivation, gradient, execution graph, auto-differentiation, tensor, logistic regression, loss function, modules, Module class, convolution, max pooling, ResNet, transposed convolution, upsampling layers, UNet, GAN, YOLO, BlazeFace">
+  <link rel="icon" type="image/x-icon" href="content/favicon.png">
+</head>
+<body>
+
+<div class="focus">
+    <h1 style="margin-bottom: 0px;">
+        Let's create mini PyTorch from scratch.<br/>
+    </h1>
+    <h2 style="margin-top: 0px;">
+        A step by step tutorial (NumPy / CuPy).
+    </h2>
+
+    <a href="https://github.com/dajuric/dark" class="button-with-image">
+        <img src="content/github.png" alt="GitHub Icon">
+        View Project on GitHub
+    </a>
+    <a href="https://www.linkedin.com/in/darko-juric/" class="button-with-image">
+        <img src="content/linkedin.webp" alt="LinkedIn Icon">
+        About the author
+    </a>
+
+    <div class="focus-description">
+        <p style="font-style: italic; font-weight: bold;">
+            Have you ever wondered how PyTorch works in depth? If the answer is positive and you have a moderate knowledge of PyTorch (because we are going into depth) - the this tutorial and series of articles is for you.
+        </p>
+        <p>
+            We start gently by introducing the concept of derivation, then move on to function optimization. From there, we build our first neural network, followed by convolutional neural networks for classification, regression, segmentation, and image generation. Finally, we conclude with object detection - YOLO.
+        </p>
+
+        This tutorial is created to reveal and recreate the internal workings of the famous PyTorch framework by following the principles:
+        <ol>
+            <li>A moderate knowledge of Python and PyTorch framework is assumed.</li>
+            <li>Concepts are introduced step by step with samples.</li>
+            <li>The focus is placed on computer vision samples.</li>
+            <li>Sample datasets are chosen to provide fast training with acceptable results. </li>
+            <li>Significant effort is put on code simplicity and readability.</li>
+        </ol>
+    </div>
+</div>
+
+<div class="module">
+  <h2 class="module-title">Module 0 - Intro</h2>
+  <p class="module-description">
+     Introduction & motivation for gradient based optimization. 
+  </p>
+  
+  <div class="grid">
+    <div class="card">
+        <a href="https://itnext.io/mini-pytorch-from-scratch-module-0-d5d58e917351">
+            <img src="content/m0.0.webp" alt="Post">
+            <h2 class="card-title">Introduction</h2>
+            <p class="card-description">Summary of everything that will be built from scratch.</p>
+        </a>   
+    </div>
+        
+    <div class="card">
+        <a href="https://itnext.io/mini-pytorch-from-scratch-module-1-part-0-1606b6726233">
+            <img src="content/m1.0.webp" alt="Post">
+            <h2 class="card-title">Gradients - Motivation</h2>
+            <p class="card-description">A motivation on why we use gradient based optimization.</p>
+        </a> 
+    </div>
+  </div>
+</div>
+<hr/>
+
+<div class="module">
+    <h2 class="module-title">Module 1 - AutoDiff</h2>
+    <p class="module-description">
+        We will extend the basis by taking a derivative of a complex function in a way PyTorch does it. For that we will introduce execution graph and auto-differentiation. 
+        Finally we will make out first framework for function minimization which supports scalars. <br/>
+       <i>Example: 1D function optimization.</i>
+    </p>
+    
+    <div class="grid">
+        <div class="card">
+            <a href="https://itnext.io/mini-pytorch-from-scratch-module-1-part-1-63376eb56bb6">
+                <img src="content/m1.1.webp" alt="Post">
+                <h2 class="card-title">Auto-diff - A Theory Behind</h2>
+                <p class="card-description">How derivatives are calculated and propagated backwards.</p>
+            </a>
+        </div>
+
+        <div class="card">
+            <a href="https://itnext.io/mini-pytorch-from-scratch-module-1-part-2-2dbad2a2d54e">
+                <img src="content/m1.2.webp" alt="Post">
+                <h2 class="card-title">Auto-diff - An Implementation (for scalars)</h2>
+                <p class="card-description">An implementation of an auto-diff engine (for scalars).</p>
+            </a>   
+        </div>
+    </div>
+  </div>
+  <hr/>
+
+  <div class="module">
+    <h2 class="module-title">Module 2 - AutoDiff (Tensors)</h2>
+    <p class="module-description">
+       The framework will be extended to work on multi dimensional arrays (tensors).<br/>
+       <i>Example: Logistic regression.</i>
+    </p>
+    
+    <div class="grid">
+      <a href="https://itnext.io/mini-pytorch-from-scratch-module-2-c6f418f10cbf">
+          <div class="card">
+              <img src="content/m2.0.webp" alt="Post">
+              <h2 class="card-title">Auto-diff - Tensor Support</h2>
+              <p class="card-description">Here we extend the scalar auto-diff engine to work with tensors.</p>
+          </div>
+      </a>
+    </div>
+  </div>
+  <hr/>
+
+  <div class="module">
+    <h2 class="module-title">Module 3 - Module Class</h2>
+    <p class="module-description">
+        Logistic regression will be rewritten in a PyTorch style. For that we need to introduce Module - a basic higher-order building block. Loss function and optimization algorithms will be placed into their respective places. We will conclude with simple NN regression on 2D data. <br/>
+       <i>Example: a simple NN from scratch using Module.</i>
+    </p>
+    
+    <div class="grid">
+      <a href="https://itnext.io/mini-pytorch-from-scratch-module-3-c91429733b37">
+          <div class="card">
+              <img src="content/m3.0.webp" alt="Post">
+              <h2 class="card-title">Module Class</h2>
+              <p class="card-description">A Module class as a basic building block for layers.</p>
+          </div>
+      </a>
+    </div>
+  </div>
+  <hr/>
+
+  <div class="module">
+    <h2 class="module-title">Module 4 - Dataset & DataLoader</h2>
+    <p class="module-description">
+        In order for our models to work they need data. Therefore, we will create Dataset - a class describing how a single sample is loaded, DataLoader - a class responsible for data batching and transformation classes - for data augmentation. <br/>
+        <i>Example: clothes classification using NN.</i>
+    </p>
+    
+    <div class="grid">
+      <a href="https://itnext.io/mini-pytorch-from-scratch-module-4-1e0581b92a4d">
+          <div class="card">
+              <img src="content/m4.0.webp" alt="Post">
+              <h2 class="card-title">Dataset & DataLoader</h2>
+              <p class="card-description">Dataset & DataLoader classes.</p>
+          </div>
+      </a>
+    </div>
+  </div>
+  <hr/>
+
+  <div class="module">
+    <h2 class="module-title">Module 5 - 2D Convolution (and Friends)</h2>
+    <p class="module-description">
+        In order to speed up the calculation we will implement support for GPU via CuPy. 
+        To work with images we will explain and implement convolution and max pooling layers (for CPU and GPU). Moreover, batch normalization and dropout will be implemented and explained. <br/>
+        <i>Examples: ResNet classifcation, ResNet landmark detection</i>
+    </p>
+    
+    <div class="grid">
+      <a href="https://itnext.io/mini-pytorch-from-scratch-module-5-part-1-0c8e6156d3d3">
+          <div class="card">
+              <img src="content/m5.1.webp" alt="Post">
+              <h2 class="card-title">2D Convolution</h2>
+              <p class="card-description">2D Convolution Layer (CPU/GPU).</p>
+          </div>
+      </a>
+      <a href="https://itnext.io/mini-pytorch-from-scratch-module-5-part-2-aed4a74de9a5">
+        <div class="card">
+            <img src="content/m5.2.webp" alt="Post">
+            <h2 class="card-title">2D Pooling</h2>
+            <p class="card-description">2D Pooling Layer (CPU/GPU).</p>
+        </div>
+       </a>
+       <a href="https://itnext.io/mini-pytorch-from-scratch-module-5-part-3-122aaa2aaf74">
+        <div class="card">
+            <img src="content/m5.3.webp" alt="Post">
+            <h2 class="card-title">2D Batch Norm</h2>
+            <p class="card-description">2D Batch Normalization Layer.</p>
+        </div>
+       </a>
+       <a href="https://itnext.io/mini-pytorch-from-scratch-module-5-part-4-91ddce18cf5a">
+        <div class="card">
+            <img src="content/m5.4.webp" alt="Post">
+            <h2 class="card-title">Dropout</h2>
+            <p class="card-description">An Implementation of Dropout Layer.</p>
+        </div>
+       </a>
+       <a href="https://itnext.io/mini-pytorch-from-scratch-module-5-part-5-b5ee97929b61">
+        <div class="card">
+            <img src="content/m5.5.webp" alt="Post">
+            <h2 class="card-title">Sample: CIFAR10 classification - ResNet</h2>
+            <p class="card-description">ResNet based network for CIFAR10 image classification.</p>
+        </div>
+       </a>
+       <a href="https://itnext.io/mini-pytorch-from-scratch-module-5-part-6-fb72341f8df4">
+        <div class="card">
+            <img src="content/m5.6.webp" alt="Post">
+            <h2 class="card-title">Sample: Face Landmark Detection - ResNet</h2>
+            <p class="card-description">ResNet based network for face landmark regression.</p>
+        </div>
+       </a>
+    </div>
+  </div>
+  <hr/>
+
+  <div class="module">
+    <h2 class="module-title">Module 6 - Upsampling Layers</h2>
+    <p class="module-description">
+        Image to image translation (e.g. autoencoders) require image upsampling opposed to convolution and max-pooling which usually reduce image size. 
+        Therefore, transposed convolution and upsample layers will be introduced and implemented. <br/>
+        <i>Examples: UNet car segmentation, DCGAN anime generation</i>
+    </p>
+    
+    <div class="grid">
+      <a href="https://itnext.io/mini-pytorch-from-scratch-module-6-part-1-84b083598c88">
+          <div class="card">
+              <img src="content/m6.1.webp" alt="Post">
+              <h2 class="card-title">Transposed 2D Convolution</h2>
+              <p class="card-description">2D transposed convolution implementation using 2D Convolution primitives.</p>
+          </div>
+       </a>
+       <a href="https://itnext.io/mini-pytorch-from-scratch-module-6-part-2-4ec73440e528">
+        <div class="card">
+            <img src="content/m6.2.webp" alt="Post">
+            <h2 class="card-title">2D Upsampling</h2>
+            <p class="card-description">Due to Tranpose conv may cause unwanted artifacts, we implement 2d upsampling layer.</p>
+        </div>
+       </a>
+       <a href="https://itnext.io/mini-pytorch-from-scratch-module-6-part-3-493bcdef6077">
+        <div class="card">
+            <img src="content/m6.3.webp" alt="Post">
+            <h2 class="card-title">Sample: Object Segmentation using UNet</h2>
+            <p class="card-description">UNet implementation using 2d transpose conv. Car segmentation.</p>
+        </div>
+       </a>
+       <a href="https://itnext.io/mini-pytorch-from-scratch-module-6-part-4-70719f4b2c02">
+        <div class="card">
+            <img src="content/m6.4.webp" alt="Post">
+            <h2 class="card-title">Sample: Anime Generation using DCGAN</h2>
+            <p class="card-description">DCGAN implementation. Anime image generation.</p>
+        </div>
+       </a>
+    </div>
+  </div>
+  <hr/>
+
+  <div class="module">
+    <h2 class="module-title">Module 7 - YOLO from Scratch</h2>
+    <p class="module-description">
+        In order to show we support SOTA algorithms, a object detection algorithm - YOLO will be created from scratch.<br/>
+        <i>Example: YOLO</i>
+    </p>
+    
+    <div class="grid">
+      <a href="https://itnext.io/mini-pytorch-from-scratch-module-7-c7066b46445f">
+          <div class="card">
+              <img src="content/m7.0.webp" alt="Post">
+              <h2 class="card-title">YOLO Object Detection from Scratch!</h2>
+              <p class="card-description">An implementtion of YOLOv3 using BlazeFace (from MediaPipe) backbone for fast face detection.</p>
+          </div>
+       </a>
+    </div>
+  </div>
+
+
+<footer>
+  <p>&copy; 2024 Darko Jurić. All rights reserved.</p>
+  <script type="application/ld+json">
+    {
+      "@context": "http://schema.org",
+      "@type": "Article",
+      "headline": "Let's create mini PyTorch from scratch. A step by step tutorial (NumPy / CuPy).",
+      "description": "A comprehensive tutorial on how to create a light version of PyTorch from scratch using only NumPy/CuPy.",
+      "author": {
+        "@type": "Person",
+        "name": "Darko Jurić"
+      },
+      "datePublished": "2024-08-06",
+      "image": "content/background.png",
+      "publisher": {
+        "@type": "Person",
+        "name": "Dark: Mini PyTorch",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "content/background.png"
+        }
+      }
+    }
+    </script>
+</footer>
+
+</body>
+</html>

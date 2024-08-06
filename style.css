@@ -1,0 +1,133 @@
+body {
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    padding: 0;
+    color: #dadccd;
+    overflow-x: hidden;
+    background-color: #000000;
+    line-height: 1.6;
+}
+ /* Background Image with Parallax Effect */
+ body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: url('content/background.png') no-repeat center center fixed;
+    background-size: cover;
+    background-attachment: fixed;
+    filter: blur(24px) brightness(0.3);
+    transform: scale(1.1) perspective(1200px) rotateY(10deg);
+    z-index: -2;
+  }
+
+  /* Overlay to dim the background */
+  body::after {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: -1;
+  }
+
+
+.module {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0.5rem;
+}
+.module-title {
+    text-align: center;
+    margin-bottom: 0.5rem;
+}
+.module-description {
+    text-align: justify;
+    font-size: larger;
+    margin-bottom: 1.5rem;
+}
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+    gap: 2rem;
+}
+
+.card {
+    background-color: #373f33;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+    width: 450px;
+    min-height: 300px;
+    max-height: 350px;
+}
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+}
+.card img {
+    max-width: 450px;
+    height: auto;
+}
+.card-title {
+    font-size: 1.2rem;
+    margin: 1rem;
+}
+.card-description {
+    font-size: 1rem;
+    margin: 0 1rem 1rem;
+}
+a {
+    color:  #dadccd;
+    text-decoration: none;
+}
+a:active {
+    color: #dadccd;
+}
+
+footer {
+    color: #fff;
+    text-align: center;
+    padding: 1rem;
+    margin-top: 2rem;
+}
+
+
+.focus {
+    max-width: 1200px;
+    align-items: center;
+    text-align: center;
+    margin: auto;
+}
+
+.focus-description {
+    text-align: justify;
+    font-size: large;
+    margin-top: 4.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.button-with-image {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.6rem 1.5rem;
+    font-size: 1rem;
+    background-color: #165105;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+}
+.button-with-image img {
+    width: 40px;
+    height: 40px;
+    margin-right: 10px;
+}
+.button-with-image:hover {
+    background-color: #7c0505;
+}
